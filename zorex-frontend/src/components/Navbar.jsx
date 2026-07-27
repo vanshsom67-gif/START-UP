@@ -1,150 +1,194 @@
 import React, { useState } from "react";
-import { ShoppingCart, LogOut, Search, User, ChevronDown } from "lucide-react";
+import { ShoppingCart, Search, User, ChevronDown, Menu, X, LayoutDashboard, Heart, Sparkles } from "lucide-react";
 
-export default function Navbar({ user, cartCount, onLogout, onCartClick, searchQuery, onSearchChange, onProfileClick, onOrdersClick }) {
+export default function Navbar({
+  user,
+  cartCount,
+  wishlistCount,
+  onLogout,
+  onCartClick,
+  onWishlistClick,
+  searchQuery,
+  onSearchChange,
+  onProfileClick,
+  onOrdersClick,
+  onAdminClick,
+  isAdmin,
+  onHomeClick,
+}) {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogoClick = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (onHomeClick) onHomeClick();
+    setMobileMenuOpen(false);
+  };
 
   return (
-    <nav>
-      <div className="nav-left" style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-        <div 
-          className="logo-container" 
-          onClick={() => window.location.reload()} 
-          style={{ display: "flex", flexDirection: "column", cursor: "pointer" }}
-        >
-          <span className="logo-main" style={{ color: "white", fontSize: "20px", fontStyle: "italic", fontWeight: "700", lineHeight: "1" }}>
-            Zorexa
-          </span>
-          <span className="logo-subtext">
-            Explore <span style={{ color: "#ec4899" }}>Plus</span> <span style={{ color: "#ec4899", fontSize: "10px" }}>★</span>
-          </span>
+    <nav className="main-navbar">
+      {/* LEFT: Logo + Search */}
+      <div className="nav-left">
+        <div className="logo-container" onClick={handleLogoClick}>
+          <div className="logo-text">
+            <span className="logo-main">ZOREXA</span>
+            <span className="logo-subtext">
+              HAUTE FASHION <Sparkles size={10} style={{ color: "#c026d3", display: "inline" }} />
+            </span>
+          </div>
         </div>
 
         {user && (
-          <div className="search-wrapper" style={{ width: "350px" }}>
-            <Search size={18} />
+          <div className="search-wrapper">
+            <Search size={16} className="search-icon" />
             <input
               type="text"
-              placeholder="Search for products, brands and more"
+              placeholder="Search luxury streetwear, ethnic & accessories..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
             />
+            {searchQuery && (
+              <button
+                onClick={() => onSearchChange("")}
+                className="search-clear-btn"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
         )}
       </div>
 
+      {/* RIGHT: Desktop Actions */}
       {user && (
-        <div className="nav-actions" style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <button className="secondary" onClick={onCartClick} style={{ position: "relative" }}>
-            <ShoppingCart size={18} />
-            <span>Cart</span>
-            {cartCount > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: "-8px",
-                  right: "-8px",
-                  backgroundColor: "#ec4899",
-                  color: "white",
-                  borderRadius: "50%",
-                  padding: "2px 6px",
-                  fontSize: "0.75rem",
-                  fontWeight: "bold",
-                  lineHeight: "1",
-                }}
-              >
-                {cartCount}
-              </span>
+        <div className="nav-actions">
+          {/* Admin Panel */}
+          {isAdmin && (
+            <button onClick={onAdminClick} className="admin-panel-btn">
+              <LayoutDashboard size={15} />
+              <span>Admin Panel</span>
+            </button>
+          )}
+
+          {/* Wishlist */}
+          <button className="nav-action-btn nav-wishlist-btn" onClick={onWishlistClick} title="Wishlist">
+            <Heart size={19} />
+            <span className="nav-btn-label">Wishlist</span>
+            {wishlistCount > 0 && (
+              <span className="wishlist-badge">{wishlistCount}</span>
             )}
           </button>
 
-          <div 
-            className="dropdown" 
+          {/* Cart */}
+          <button className="nav-action-btn nav-cart-btn" onClick={onCartClick} title="Shopping Cart">
+            <ShoppingCart size={19} />
+            <span className="nav-btn-label">Cart</span>
+            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+          </button>
+
+          {/* User Dropdown */}
+          <div
+            className="dropdown"
             onMouseEnter={() => setShowDropdown(true)}
             onMouseLeave={() => setShowDropdown(false)}
-            style={{ position: "relative" }}
           >
-            <button 
-              className="dropbtn" 
-              style={{ 
-                background: "transparent", 
-                color: "white", 
-                border: "none", 
-                display: "flex", 
-                alignItems: "center", 
-                gap: "4px", 
-                cursor: "pointer", 
-                fontWeight: "600", 
-                fontSize: "15px",
-                padding: "8px 10px"
-              }}
-            >
-              <User size={16} />
-              <span>Hi, {user.email.split("@")[0]}</span>
-              <ChevronDown size={14} />
+            <button className="dropbtn">
+              <div className="user-avatar-pill">
+                <User size={15} />
+              </div>
+              <span className="user-name">{(user.name || user.email).split(/[@\s]/)[0]}</span>
+              {isAdmin && <span className="crown-badge" title="Administrator">👑</span>}
+              <ChevronDown size={14} className={`chevron ${showDropdown ? "open" : ""}`} />
             </button>
+
             {showDropdown && (
-              <div 
-                className="dropdown-content" 
-                style={{ 
-                  display: "block",
-                  position: "absolute",
-                  right: 0,
-                  top: "100%",
-                  backgroundColor: "white",
-                  minWidth: "150px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                  borderRadius: "2px",
-                  border: "1px solid #f0f0f0",
-                  zIndex: 1000
-                }}
-              >
-                <a 
-                  onClick={onProfileClick}
-                  style={{ 
-                    color: "#212121", 
-                    padding: "10px 15px", 
-                    textDecoration: "none", 
-                    display: "block", 
-                    fontSize: "14px", 
-                    cursor: "pointer",
-                    borderBottom: "1px solid #f9f9f9"
-                  }}
-                >
-                  👤 My Profile
+              <div className="dropdown-content">
+                <div className="dropdown-header">
+                  <span className="dropdown-user-title">{user.name || user.email}</span>
+                  <span className="dropdown-user-role">{isAdmin ? "Admin Account" : "Zorexa Member"}</span>
+                </div>
+                <div className="dropdown-divider" />
+                {isAdmin && (
+                  <a onClick={() => { onAdminClick(); setShowDropdown(false); }} className="admin-link">
+                    <LayoutDashboard size={15} /> Admin Dashboard
+                  </a>
+                )}
+                <a onClick={() => { onProfileClick(); setShowDropdown(false); }}>
+                  <User size={15} /> My Profile
                 </a>
-                <a 
-                  onClick={onOrdersClick}
-                  style={{ 
-                    color: "#212121", 
-                    padding: "10px 15px", 
-                    textDecoration: "none", 
-                    display: "block", 
-                    fontSize: "14px", 
-                    cursor: "pointer",
-                    borderBottom: "1px solid #f9f9f9"
-                  }}
-                >
-                  📦 Orders
+                <a onClick={() => { onOrdersClick(); setShowDropdown(false); }}>
+                  📦 My Orders
                 </a>
-                <a 
-                  onClick={onLogout}
-                  style={{ 
-                    color: "#212121", 
-                    padding: "10px 15px", 
-                    textDecoration: "none", 
-                    display: "block", 
-                    fontSize: "14px", 
-                    cursor: "pointer"
-                  }}
-                >
-                  🚪 Logout
+                <a onClick={() => { onWishlistClick(); setShowDropdown(false); }}>
+                  <Heart size={15} /> Wishlist {wishlistCount > 0 ? `(${wishlistCount})` : ""}
+                </a>
+                <div className="dropdown-divider" />
+                <a onClick={() => { onLogout(); setShowDropdown(false); }} className="logout-item">
+                  🚪 Sign Out
                 </a>
               </div>
             )}
           </div>
         </div>
       )}
+
+      {/* Hamburger (Mobile) */}
+      {user && (
+        <button className="hamburger-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      )}
+
+      {/* Mobile Menu */}
+      {user && mobileMenuOpen && (
+        <div className="mobile-menu" onClick={() => setMobileMenuOpen(false)}>
+          <div className="mobile-menu-inner" onClick={(e) => e.stopPropagation()}>
+            <div className="mobile-search-wrapper">
+              <Search size={16} />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+              />
+            </div>
+
+            <div className="mobile-user-greeting">
+              <span>Hi, <strong>{user.name || user.email.split("@")[0]}</strong></span>
+              {isAdmin && <span className="admin-tag-mobile">👑 Admin</span>}
+            </div>
+
+            {isAdmin && (
+              <button className="mobile-menu-item" onClick={() => { onAdminClick(); setMobileMenuOpen(false); }}>
+                <LayoutDashboard size={16} /> <span>Admin Panel</span>
+              </button>
+            )}
+
+            <button className="mobile-menu-item" onClick={() => { onWishlistClick(); setMobileMenuOpen(false); }}>
+              <Heart size={16} /> <span>Wishlist</span>
+              {wishlistCount > 0 && <span className="cart-badge-mobile">{wishlistCount}</span>}
+            </button>
+
+            <button className="mobile-menu-item" onClick={() => { onCartClick(); setMobileMenuOpen(false); }}>
+              <ShoppingCart size={16} /> <span>My Cart</span>
+              {cartCount > 0 && <span className="cart-badge-mobile">{cartCount}</span>}
+            </button>
+
+            <button className="mobile-menu-item" onClick={() => { onProfileClick(); setMobileMenuOpen(false); }}>
+              <User size={16} /> <span>My Profile</span>
+            </button>
+
+            <button className="mobile-menu-item" onClick={() => { onOrdersClick(); setMobileMenuOpen(false); }}>
+              📦 <span>My Orders</span>
+            </button>
+
+            <button className="mobile-menu-item danger-item" onClick={() => { onLogout(); setMobileMenuOpen(false); }}>
+              🚪 <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
+

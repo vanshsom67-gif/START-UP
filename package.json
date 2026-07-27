@@ -1,0 +1,13 @@
+{
+  "name": "zorexa-fashion",
+  "version": "1.0.0",
+  "description": "Zorexa Fashion Fullstack E-Commerce App",
+  "main": "zorex-backend/server.js",
+  "scripts": {
+    "start": "node zorex-backend/server.js",
+    "build": "npm run build --prefix zorex-frontend",
+    "dev:backend": "node zorex-backend/server.js",
+    "dev:frontend": "npm run dev --prefix zorex-frontend",
+    "postinstall": "npm install --prefix zorex-backend && npm install --prefix zorex-frontend"
+  }
+}

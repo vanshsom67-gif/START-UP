@@ -1,52 +1,52 @@
 import React, { useState } from "react";
-import { Mail, Phone, Lock, User, LogIn, UserPlus } from "lucide-react";
+import { Mail, Lock, User, LogIn, UserPlus, CheckCircle, Eye, EyeOff, Sparkles, ShieldCheck } from "lucide-react";
+import { API_BASE } from "../config/api";
 
 export default function Auth({ onLoginSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
-  
-  // Login States
-  const [loginUsername, setLoginUsername] = useState("");
+
+  // Login state
+  const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  
-  // Signup States
+
+  // Signup state
+  const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPhone, setSignupPhone] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
-  
-  // Feedback States
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const API_URL = "http://localhost:5000/api";
+  // UI state
+  const [showLoginPass, setShowLoginPass] = useState(false);
+  const [showSignupPass, setShowSignupPass] = useState(false);
+  const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!loginUsername || !loginPassword) {
-      setError("Please fill in all fields");
-      return;
-    }
-
     setError("");
+    setSuccessMsg("");
     setLoading(true);
+
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: loginUsername,
-          password: loginPassword,
-        }),
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       });
 
-      const data = await response.json();
-      if (response.ok && data.status === "success") {
+      const data = await res.json();
+
+      if (res.ok && data.status === "success") {
+        localStorage.setItem("zorex_token", data.token);
+        localStorage.setItem("zorex_user", JSON.stringify(data.user));
         onLoginSuccess(data.user);
       } else {
-        setError(data.message || "Invalid credentials");
+        setError(data.message || "Invalid email or password");
       }
     } catch (err) {
       console.error(err);
-      setError("Server connection failed. Is the backend running?");
+      setError("Unable to connect to authentication server. Please check backend.");
     } finally {
       setLoading(false);
     }
@@ -54,40 +54,42 @@ export default function Auth({ onLoginSuccess }) {
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    if (!signupEmail || !signupPhone || !signupPassword) {
-      setError("Please fill in all fields");
+    setError("");
+    setSuccessMsg("");
+
+    if (signupPassword.length < 6) {
+      setError("Password must be at least 6 characters long");
       return;
     }
 
-    setError("");
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/auth/signup`, {
+      const res = await fetch(`${API_BASE}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          name: signupName || "Zorexa Member",
           email: signupEmail,
           phone: signupPhone,
           password: signupPassword,
         }),
       });
 
-      const data = await response.json();
-      if (response.ok) {
-        alert("Account Created Successfully! Please log in.");
-        setIsLogin(true);
-        // Reset states
-        setSignupEmail("");
-        setSignupPhone("");
-        setSignupPassword("");
-        // Autofill login username
-        setLoginUsername(signupEmail);
+      const data = await res.json();
+
+      if (res.ok && data.status === "success") {
+        localStorage.setItem("zorex_token", data.token);
+        localStorage.setItem("zorex_user", JSON.stringify(data.user));
+        setSuccessMsg("Account created successfully! Redirecting...");
+        setTimeout(() => {
+          onLoginSuccess(data.user);
+        }, 800);
       } else {
-        setError(data.message || "Signup failed");
+        setError(data.message || "Signup failed. Please try again.");
       }
     } catch (err) {
       console.error(err);
-      setError("Server connection failed. Is the backend running?");
+      setError("Unable to connect to server. Please check backend.");
     } finally {
       setLoading(false);
     }
@@ -96,27 +98,45 @@ export default function Auth({ onLoginSuccess }) {
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setError("");
+    setSuccessMsg("");
   };
 
   return (
     <div className="auth-page">
       <div className="auth-card">
+        {/* Left Banner */}
         <div className="auth-left-banner">
-          <div>
-            <h2>{isLogin ? "Login" : "Sign Up"}</h2>
+          <div className="auth-brand-info">
+            <div className="auth-brand-logo">
+              ZOREXA <Sparkles size={14} style={{ color: "#c026d3", display: "inline-block" }} />
+            </div>
+            <div className="auth-brand-tagline">HAUTE FASHION & STREETWEAR</div>
+            <h2>{isLogin ? "Welcome Back" : "Join Zorexa"}</h2>
             <p>
               {isLogin
-                ? "Get access to your Orders, Wishlist and Recommendations"
-                : "We do not share your personal details with anyone."}
+                ? "Sign in to access your curated wishlist, order tracking and bespoke recommendations."
+                : "Create an exclusive account to explore our signature streetwear & couture collections."}
             </p>
           </div>
-          <div className="banner-art">🛒🛍️📦</div>
+          <div className="banner-art">
+            <div className="banner-art-icon">✨</div>
+            <div className="banner-features">
+              <span><ShieldCheck size={14} /> Certified Authentic</span>
+              <span>⚡ Express Shipping</span>
+            </div>
+          </div>
         </div>
 
+        {/* Right Form */}
         <div className="auth-right-form">
           <div>
+            {successMsg && (
+              <div className="auth-alert success">
+                <CheckCircle size={16} /> {successMsg}
+              </div>
+            )}
             {error && (
-              <div style={{ color: "#ef4444", marginBottom: "1rem", fontSize: "0.9rem", fontWeight: "500", textAlign: "center" }}>
+              <div className="auth-alert error">
                 {error}
               </div>
             )}
@@ -124,52 +144,79 @@ export default function Auth({ onLoginSuccess }) {
             {isLogin ? (
               <form onSubmit={handleLogin}>
                 <div className="form-group">
-                  <label htmlFor="username">Email or Phone Number</label>
+                  <label htmlFor="loginEmail">Email Address</label>
                   <div className="input-wrapper">
-                    <User size={18} />
+                    <Mail size={16} />
                     <input
-                      type="text"
-                      id="username"
-                      placeholder="name@email.com or +91..."
-                      value={loginUsername}
-                      onChange={(e) => setLoginUsername(e.target.value)}
+                      type="email"
+                      id="loginEmail"
+                      placeholder="you@domain.com"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
                       disabled={loading}
                       required
+                      autoFocus
                     />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="password">Password</label>
+                  <label htmlFor="loginPassword">Password</label>
                   <div className="input-wrapper">
-                    <Lock size={18} />
+                    <Lock size={16} />
                     <input
-                      type="password"
-                      id="password"
+                      type={showLoginPass ? "text" : "password"}
+                      id="loginPassword"
                       placeholder="••••••••"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       disabled={loading}
                       required
                     />
+                    <span
+                      onClick={() => setShowLoginPass(!showLoginPass)}
+                      className="password-toggle-btn"
+                    >
+                      {showLoginPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </span>
                   </div>
                 </div>
 
-                <button type="submit" disabled={loading} style={{ textTransform: "uppercase" }}>
-                  <LogIn size={18} />
-                  {loading ? "Logging in..." : "Login"}
+                <button type="submit" disabled={loading} className="auth-submit-btn">
+                  <LogIn size={16} />
+                  <span>{loading ? "Authenticating..." : "Sign In"}</span>
                 </button>
+
+                <div className="admin-demo-box">
+                  🔑 Administrator Credentials: <strong>admin@zorexa.com</strong> / <strong>admin123</strong>
+                </div>
               </form>
             ) : (
               <form onSubmit={handleSignup}>
                 <div className="form-group">
+                  <label htmlFor="signupName">Full Name</label>
+                  <div className="input-wrapper">
+                    <User size={16} />
+                    <input
+                      type="text"
+                      id="signupName"
+                      placeholder="Vansh Soam"
+                      value={signupName}
+                      onChange={(e) => setSignupName(e.target.value)}
+                      disabled={loading}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
                   <label htmlFor="signupEmail">Email Address</label>
                   <div className="input-wrapper">
-                    <Mail size={18} />
+                    <Mail size={16} />
                     <input
                       type="email"
                       id="signupEmail"
-                      placeholder="name@example.com"
+                      placeholder="you@domain.com"
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
                       disabled={loading}
@@ -181,25 +228,23 @@ export default function Auth({ onLoginSuccess }) {
                 <div className="form-group">
                   <label htmlFor="signupPhone">Phone Number</label>
                   <div className="input-wrapper">
-                    <Phone size={18} />
                     <input
-                      type="text"
+                      type="tel"
                       id="signupPhone"
-                      placeholder="e.g., 8791910659"
+                      placeholder="+91 8791910659"
                       value={signupPhone}
                       onChange={(e) => setSignupPhone(e.target.value)}
                       disabled={loading}
-                      required
                     />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="signupPassword">Create Password</label>
+                  <label htmlFor="signupPassword">Password <span className="label-subtext">(Min 6 characters)</span></label>
                   <div className="input-wrapper">
-                    <Lock size={18} />
+                    <Lock size={16} />
                     <input
-                      type="password"
+                      type={showSignupPass ? "text" : "password"}
                       id="signupPassword"
                       placeholder="••••••••"
                       value={signupPassword}
@@ -207,12 +252,18 @@ export default function Auth({ onLoginSuccess }) {
                       disabled={loading}
                       required
                     />
+                    <span
+                      onClick={() => setShowSignupPass(!showSignupPass)}
+                      className="password-toggle-btn"
+                    >
+                      {showSignupPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </span>
                   </div>
                 </div>
 
-                <button type="submit" disabled={loading} style={{ textTransform: "uppercase" }}>
-                  <UserPlus size={18} />
-                  {loading ? "Creating Account..." : "Continue"}
+                <button type="submit" disabled={loading} className="auth-submit-btn">
+                  <UserPlus size={16} />
+                  <span>{loading ? "Creating Account..." : "Create Account"}</span>
                 </button>
               </form>
             )}
@@ -220,15 +271,9 @@ export default function Auth({ onLoginSuccess }) {
 
           <div className="auth-toggle">
             {isLogin ? (
-              <>
-                New to Zorexa Fashion?
-                <span onClick={toggleMode}>Create an account</span>
-              </>
+              <>New to Zorexa? <span onClick={toggleMode}>Create your account</span></>
             ) : (
-              <>
-                Already have an account?
-                <span onClick={toggleMode}>Login</span>
-              </>
+              <>Already have an account? <span onClick={toggleMode}>Sign In</span></>
             )}
           </div>
         </div>
@@ -236,3 +281,4 @@ export default function Auth({ onLoginSuccess }) {
     </div>
   );
 }
+
