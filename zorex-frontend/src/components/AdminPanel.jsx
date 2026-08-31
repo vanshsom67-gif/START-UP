@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from "react";
 import {
   LayoutDashboard, Package, ShoppingBag, Users,
-  Plus, Pencil, Trash2, Check, X, RefreshCw, ChevronDown
+  Plus, Pencil, Trash2, Check, X, RefreshCw, ChevronDown, ArrowLeft
 } from "lucide-react";
 import { API_BASE, authFetch } from "../config/api";
 
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
   { id: "products", label: "Products", icon: "👕" },
-  { id: "orders", label: "Orders", icon: "📦" },
+  { id: "orders", label: "Orders", icon: "" },
   { id: "users", label: "Users", icon: "👥" },
 ];
 
 const STATUS_OPTIONS = ["Placed", "Confirmed", "Shipped", "Delivered", "Cancelled"];
-const CATEGORIES = ["Men's Clothing", "Women's Clothing", "Accessories", "Footwear"];
+const CATEGORIES = ["Gym & Supplements", "Men's Clothing", "Women's Clothing", "Accessories", "Footwear"];
 
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 function DashboardTab() {
@@ -56,7 +56,7 @@ function DashboardTab() {
 
   const statCards = [
     { label: "Total Products", value: productCount, icon: "👕", color: "#6366f1" },
-    { label: "Total Orders", value: stats?.totalOrders || 0, icon: "📦", color: "#ec4899" },
+    { label: "Total Orders", value: stats?.totalOrders || 0, icon: "", color: "#ec4899" },
     { label: "Total Revenue", value: `₹${(stats?.totalRevenue || 0).toLocaleString()}`, icon: "💰", color: "#10b981" },
     { label: "Pending Orders", value: stats?.pendingOrders || 0, icon: "⏳", color: "#f59e0b" },
     { label: "Delivered", value: stats?.deliveredOrders || 0, icon: "✅", color: "#22c55e" },
@@ -612,7 +612,7 @@ function OrdersTab() {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-        <h2 className="admin-section-title" style={{ margin: 0 }}>📦 Orders Management</h2>
+        <h2 className="admin-section-title" style={{ margin: 0 }}>Orders Management</h2>
         <button onClick={loadOrders} style={{ background: "white", color: "#64748b", border: "1px solid #e2e8f0", padding: "8px 12px", borderRadius: "6px", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px", textTransform: "none" }}>
           <RefreshCw size={14} /> Refresh
         </button>
@@ -974,7 +974,7 @@ function UsersTab({ currentUserId }) {
                       background: user.role === "admin" ? "#eef2ff" : user.role === "delivery" ? "#fef3c7" : "#f1f5f9",
                       color: user.role === "admin" ? "#6366f1" : user.role === "delivery" ? "#d97706" : "#64748b"
                     }}>
-                      {user.role === "admin" ? "👑 Admin" : user.role === "delivery" ? "🚚 Delivery" : "👤 User"}
+                      {user.role === "admin" ? "Admin" : user.role === "delivery" ? "Delivery" : "User"}
                     </span>
                   </td>
                   <td>
@@ -1004,7 +1004,7 @@ function UsersTab({ currentUserId }) {
                         >
                           <option value="user">👤 User</option>
                           <option value="delivery">🚚 Delivery</option>
-                          <option value="admin">👑 Admin</option>
+                          <option value="admin">Admin</option>
                         </select>
                         <button
                           onClick={() => handleStatusToggle(user)}
@@ -1031,16 +1031,103 @@ function UsersTab({ currentUserId }) {
 }
 
 // ─── Main AdminPanel Component ────────────────────────────────────────────────
-export default function AdminPanel({ user, onProductsChange }) {
+export default function AdminPanel({ user, onProductsChange, onBack }) {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
     <div className="admin-page">
+      {/* Top Header with Back Button */}
+      <div className="admin-header">
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          {onBack && (
+            <button
+              onClick={onBack}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "8px 16px",
+                background: "rgba(255, 255, 255, 0.15)",
+                color: "#ffffff",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: "600",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+              title="Return to Main Shop"
+            >
+              <ArrowLeft size={16} />
+              <span>Back to Store</span>
+            </button>
+          )}
+          <div>
+            <h1 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "white", display: "flex", alignItems: "center", gap: "8px" }}>
+              🛡️ Zorexa Admin Control Panel
+            </h1>
+            <span style={{ fontSize: "12px", color: "#c7d2fe" }}>Manage catalog, orders & registered users</span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <span style={{ fontSize: "12px", background: "rgba(255, 255, 255, 0.1)", color: "#e0e7ff", padding: "6px 14px", borderRadius: "20px" }}>
+            👤 {user?.name || user?.email}
+          </span>
+          {onBack && (
+            <button
+              onClick={onBack}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 16px",
+                background: "linear-gradient(135deg, #6366f1, #c026d3)",
+                color: "white",
+                border: "none",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: "700",
+                cursor: "pointer",
+                boxShadow: "0 2px 10px rgba(99,102,241,0.4)"
+              }}
+            >
+              <ArrowLeft size={15} /> Storefront
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="admin-body">
         {/* Sidebar */}
         <aside className="admin-sidebar">
-          <div style={{ padding: "0 20px 16px", borderBottom: "1px solid #e2e8f0", marginBottom: "8px" }}>
-            <div style={{ fontSize: "13px", fontWeight: "700", color: "#1e293b" }}>👑 Admin Panel</div>
+          <div style={{ padding: "0 16px 16px", borderBottom: "1px solid #e2e8f0", marginBottom: "12px" }}>
+            {onBack && (
+              <button
+                onClick={onBack}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  padding: "10px 12px",
+                  background: "linear-gradient(135deg, #eef2ff, #f3e8ff)",
+                  color: "#4f46e5",
+                  border: "1px solid #c7d2fe",
+                  borderRadius: "10px",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  marginBottom: "12px",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                <ArrowLeft size={15} /> ⬅️ Back to Store
+              </button>
+            )}
+            <div style={{ fontSize: "13px", fontWeight: "700", color: "#1e293b" }}>Admin Navigation</div>
             <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px" }}>{user?.email}</div>
           </div>
           {TABS.map((tab) => (

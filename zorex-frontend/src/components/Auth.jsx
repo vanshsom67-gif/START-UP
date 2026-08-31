@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Mail, Lock, User, LogIn, UserPlus, CheckCircle, Eye, EyeOff, Sparkles, ShieldCheck } from "lucide-react";
+import { Mail, Lock, User, LogIn, UserPlus, CheckCircle, Eye, EyeOff, Sparkles, ShieldCheck, Phone } from "lucide-react";
 import { API_BASE } from "../config/api";
 
 export default function Auth({ onLoginSuccess }) {
@@ -119,7 +119,7 @@ export default function Auth({ onLoginSuccess }) {
             </p>
           </div>
           <div className="banner-art">
-            <div className="banner-art-icon">✨</div>
+            <div className="banner-art-icon"></div>
             <div className="banner-features">
               <span><ShieldCheck size={14} /> Certified Authentic</span>
               <span>⚡ Express Shipping</span>
@@ -228,6 +228,7 @@ export default function Auth({ onLoginSuccess }) {
                 <div className="form-group">
                   <label htmlFor="signupPhone">Phone Number</label>
                   <div className="input-wrapper">
+                    <Phone size={16} />
                     <input
                       type="tel"
                       id="signupPhone"

@@ -5,26 +5,26 @@ export default function Hero({ onShopNowClick, onCategoryClick }) {
   const slides = [
     {
       image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1600&q=85",
-      badge: "AUTUMN / WINTER '26",
-      title: "LUXURY STREETWEAR EDIT",
-      description: "Discover curated high-fashion silhouettes, oversized outerwear & signature ethnic couture.",
+      badge: "THE FALL COLLECTION",
+      title: "Elevated Essentials",
+      description: "Discover curated silhouettes and premium outerwear for the modern wardrobe.",
       btnText: "Explore Collection",
       action: () => onShopNowClick()
     },
     {
       image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1600&q=85",
-      badge: "EXECUTIVE MEN'S WEAR",
-      title: "MODERN TAILORED SUITS & JACKETS",
-      description: "Elevate your daily statement with crisp linen shirts, urban hoodies & premium denims.",
-      btnText: "Shop Men's Wear",
+      badge: "MENSWEAR",
+      title: "Modern Tailoring",
+      description: "Crisp linens and refined layers designed for everyday statement dressing.",
+      btnText: "Shop Men",
       action: () => onCategoryClick("Men's Clothing")
     },
     {
       image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1600&q=85",
-      badge: "EDITORIAL WOMEN'S WEAR",
-      title: "ELEGANT ETNIC & HIGH-STREETWEAR",
-      description: "Sophisticated designer kurtis, evening gowns & contemporary women's apparel up to 60% off.",
-      btnText: "Shop Women's Wear",
+      badge: "WOMENSWEAR",
+      title: "Contemporary Elegance",
+      description: "Sophisticated evening wear and contemporary apparel crafted with precision.",
+      btnText: "Shop Women",
       action: () => onCategoryClick("Women's Clothing")
     }
   ];
@@ -57,7 +57,7 @@ export default function Hero({ onShopNowClick, onCategoryClick }) {
             key={index}
             className={`slide ${index === activeIndex ? "active" : ""}`}
             style={{
-              backgroundImage: `linear-gradient(to right, rgba(10, 10, 15, 0.85) 0%, rgba(10, 10, 15, 0.4) 60%, rgba(10, 10, 15, 0.2) 100%), url(${slide.image})`,
+              backgroundImage: `linear-gradient(to right, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.2) 100%), url(${slide.image})`,
               backgroundSize: "cover",
               backgroundPosition: "center"
             }}

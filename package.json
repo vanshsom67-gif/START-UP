@@ -4,8 +4,9 @@
   "description": "Zorexa Fashion Fullstack E-Commerce App",
   "main": "zorex-backend/server.js",
   "scripts": {
-    "start": "node zorex-backend/server.js",
+    "start": "npm run build --prefix zorex-frontend && node zorex-backend/server.js",
     "build": "npm run build --prefix zorex-frontend",
+    "dev": "npm run build --prefix zorex-frontend && node zorex-backend/server.js",
     "dev:backend": "node zorex-backend/server.js",
     "dev:frontend": "npm run dev --prefix zorex-frontend",
     "postinstall": "npm install --prefix zorex-backend && npm install --prefix zorex-frontend"

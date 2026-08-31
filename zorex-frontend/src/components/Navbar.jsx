@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ShoppingCart, Search, User, ChevronDown, Menu, X, LayoutDashboard, Heart, Sparkles } from "lucide-react";
+import { ShoppingCart, Search, User, ChevronDown, Menu, X, LayoutDashboard, Heart, Package, LogOut, ShieldAlert, Link as LinkIcon, Server } from "lucide-react";
 
 export default function Navbar({
   user,
@@ -15,6 +15,8 @@ export default function Navbar({
   onAdminClick,
   isAdmin,
   onHomeClick,
+  onBioLinkClick,
+  onBackendMonitorClick,
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -33,7 +35,7 @@ export default function Navbar({
           <div className="logo-text">
             <span className="logo-main">ZOREXA</span>
             <span className="logo-subtext">
-              HAUTE FASHION <Sparkles size={10} style={{ color: "#c026d3", display: "inline" }} />
+              PREMIUM LABEL
             </span>
           </div>
         </div>
@@ -87,17 +89,13 @@ export default function Navbar({
           </button>
 
           {/* User Dropdown */}
-          <div
-            className="dropdown"
-            onMouseEnter={() => setShowDropdown(true)}
-            onMouseLeave={() => setShowDropdown(false)}
-          >
-            <button className="dropbtn">
+          <div className="dropdown">
+            <button className="dropbtn" onClick={() => setShowDropdown(!showDropdown)}>
               <div className="user-avatar-pill">
                 <User size={15} />
               </div>
               <span className="user-name">{(user.name || user.email).split(/[@\s]/)[0]}</span>
-              {isAdmin && <span className="crown-badge" title="Administrator">👑</span>}
+              {isAdmin && <span className="crown-badge" title="Administrator"><ShieldAlert size={14} /></span>}
               <ChevronDown size={14} className={`chevron ${showDropdown ? "open" : ""}`} />
             </button>
 
@@ -117,14 +115,24 @@ export default function Navbar({
                   <User size={15} /> My Profile
                 </a>
                 <a onClick={() => { onOrdersClick(); setShowDropdown(false); }}>
-                  📦 My Orders
+                  <Package size={15} /> My Orders
                 </a>
                 <a onClick={() => { onWishlistClick(); setShowDropdown(false); }}>
                   <Heart size={15} /> Wishlist {wishlistCount > 0 ? `(${wishlistCount})` : ""}
                 </a>
+                {onBioLinkClick && (
+                  <a onClick={() => { onBioLinkClick(); setShowDropdown(false); }}>
+                    <LinkIcon size={15} /> Bio Link Hub
+                  </a>
+                )}
+                {onBackendMonitorClick && (
+                  <a onClick={() => { onBackendMonitorClick(); setShowDropdown(false); }}>
+                    <Server size={15} /> Backend API Status
+                  </a>
+                )}
                 <div className="dropdown-divider" />
                 <a onClick={() => { onLogout(); setShowDropdown(false); }} className="logout-item">
-                  🚪 Sign Out
+                  <LogOut size={15} /> Sign Out
                 </a>
               </div>
             )}
@@ -155,7 +163,7 @@ export default function Navbar({
 
             <div className="mobile-user-greeting">
               <span>Hi, <strong>{user.name || user.email.split("@")[0]}</strong></span>
-              {isAdmin && <span className="admin-tag-mobile">👑 Admin</span>}
+              {isAdmin && <span className="admin-tag-mobile"><ShieldAlert size={12} /> Admin</span>}
             </div>
 
             {isAdmin && (
@@ -179,11 +187,11 @@ export default function Navbar({
             </button>
 
             <button className="mobile-menu-item" onClick={() => { onOrdersClick(); setMobileMenuOpen(false); }}>
-              📦 <span>My Orders</span>
+              <Package size={16} /> <span>My Orders</span>
             </button>
 
             <button className="mobile-menu-item danger-item" onClick={() => { onLogout(); setMobileMenuOpen(false); }}>
-              🚪 <span>Sign Out</span>
+              <LogOut size={16} /> <span>Sign Out</span>
             </button>
           </div>
         </div>

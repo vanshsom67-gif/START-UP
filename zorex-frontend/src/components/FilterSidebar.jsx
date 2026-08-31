@@ -3,6 +3,7 @@ import { SlidersHorizontal, X, ChevronDown, ChevronUp } from "lucide-react";
 
 const CATEGORIES = [
   { label: "All", value: "All", icon: "✨" },
+  { label: "Gym & Supplements", value: "Gym & Supplements", icon: "🏋️‍♂️" },
   { label: "Men's Clothing", value: "Men's Clothing", icon: "👕" },
   { label: "Women's Clothing", value: "Women's Clothing", icon: "👗" },
   { label: "Accessories", value: "Accessories", icon: "👜" },

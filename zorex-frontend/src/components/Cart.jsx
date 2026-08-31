@@ -165,7 +165,7 @@ export default function Cart({ cart, onRemoveFromCart, onClearCart, onCheckout, 
                     <span style={{ fontSize: "12px", color: "#878787", fontWeight: "500" }}>Qty:</span>
                     <div style={{ display: "flex", alignItems: "center", border: "1px solid #e0e0e0", borderRadius: "4px", overflow: "hidden" }}>
                       <button
-                        onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                        onClick={() => onUpdateQuantity(item.cartItemId || item._id || item.id, item.quantity - 1)}
                         style={{
                           padding: "4px 10px",
                           background: "white",
@@ -185,7 +185,7 @@ export default function Cart({ cart, onRemoveFromCart, onClearCart, onCheckout, 
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => onUpdateQuantity(item.cartItemId || item._id || item.id, item.quantity + 1)}
                         style={{
                           padding: "4px 10px",
                           background: "white",
@@ -209,7 +209,7 @@ export default function Cart({ cart, onRemoveFromCart, onClearCart, onCheckout, 
 
                 <button
                   className="danger"
-                  onClick={() => onRemoveFromCart(item._id || item.id)}
+                  onClick={() => onRemoveFromCart(item.cartItemId || item._id || item.id)}
                   style={{ padding: "0.4rem 0.6rem", borderRadius: "2px", background: "rgba(239, 68, 68, 0.08)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.15)", flexShrink: 0 }}
                   title="Remove item"
                 >

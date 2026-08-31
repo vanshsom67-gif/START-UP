@@ -11,6 +11,9 @@ import WishlistPage from "./components/WishlistPage";
 import CheckoutPage from "./components/CheckoutPage";
 import OrdersPage from "./components/OrdersPage";
 import DeliveryPanel from "./components/DeliveryPanel";
+import BioLinkPage from "./components/BioLinkPage";
+import BackendMonitor from "./components/BackendMonitor";
+import FloatingPortalBar from "./components/FloatingPortalBar";
 import Toast, { useToast } from "./components/Toast";
 import { API_BASE, authFetch } from "./config/api";
 import { SlidersHorizontal } from "lucide-react";
@@ -68,6 +71,7 @@ export default function App() {
   const [activeModalTab, setActiveModalTab] = useState(null);
   const [aboutUsOpen, setAboutUsOpen] = useState(false);
   const [contactUsOpen, setContactUsOpen] = useState(false);
+  const [backendMonitorOpen, setBackendMonitorOpen] = useState(false);
 
   // ── Persist state ─────────────────────────────────────────────────────
   useEffect(() => { localStorage.setItem("zorex_cart", JSON.stringify(cart)); }, [cart]);
@@ -266,7 +270,8 @@ export default function App() {
   const isDelivery = user?.role === "delivery";
 
   const CATEGORIES = [
-    { label: "All Clothes", value: "All", icon: "✨" },
+    { label: "All Catalog", value: "All", icon: "✨" },
+    { label: "Gym & Supplements", value: "Gym & Supplements", icon: "🏋️‍♂️" },
     { label: "Men's Clothing", value: "Men's Clothing", icon: "👕" },
     { label: "Women's Clothing", value: "Women's Clothing", icon: "👗" },
     { label: "Accessories", value: "Accessories", icon: "👜" },
@@ -284,6 +289,8 @@ export default function App() {
     onOrdersClick: () => setView("orders"),
     onAdminClick: () => setView("admin"),
     onHomeClick: goHome,
+    onBioLinkClick: () => setView("biolink"),
+    onBackendMonitorClick: () => setBackendMonitorOpen(true),
   };
 
   // ── NOT LOGGED IN ─────────────────────────────────────────────────────
@@ -299,7 +306,27 @@ export default function App() {
     return (
       <>
         <Navbar {...navbarProps} />
-        <AdminPanel user={user} onProductsChange={fetchProducts} />
+        <AdminPanel user={user} onProductsChange={fetchProducts} onBack={goHome} />
+        <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
+        {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
+      </>
+    );
+  }
+
+  // ── BIO LINK PAGE ─────────────────────────────────────────────────────
+  if (view === "biolink") {
+    return (
+      <>
+        <Navbar {...navbarProps} />
+        <BioLinkPage
+          user={user}
+          onGoHome={goHome}
+          onGoAdmin={() => setView("admin")}
+          onGoOrders={() => setView("orders")}
+          onOpenBackendMonitor={() => setBackendMonitorOpen(true)}
+        />
+        <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
+        {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
       </>
     );
   }
@@ -324,6 +351,8 @@ export default function App() {
           relatedProducts={related}
           onRelatedClick={goToProduct}
         />
+        <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
+        {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
       </>
     );
   }
@@ -342,6 +371,8 @@ export default function App() {
           onBuyNow={handleBuyNow}
           onProductClick={goToProduct}
         />
+        <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
+        {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
       </>
     );
   }
@@ -357,6 +388,8 @@ export default function App() {
           onBack={goHome}
           onOrderPlaced={handleOrderPlaced}
         />
+        <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
+        {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
       </>
     );
   }
@@ -371,6 +404,8 @@ export default function App() {
           onBack={goHome}
           onShopNow={goHome}
         />
+        <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
+        {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
       </>
     );
   }
@@ -522,7 +557,7 @@ export default function App() {
             {/* Empty state */}
             {!loading && !error && filteredProducts.length === 0 && (
               <div className="empty-catalog-state">
-                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>✨</div>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem", color: "#000" }}>ZOREXA</div>
                 <h3>No Products Found</h3>
                 <p>Try adjusting your search criteria or price range filter</p>
                 <button className="clear-filters-btn" onClick={() => { setFilters(DEFAULT_FILTERS); setSearchQuery(""); }}>
@@ -610,12 +645,12 @@ export default function App() {
               <p><strong>Phone:</strong> {user.phone || "Not provided"}</p>
               <p><strong>Status:</strong>{" "}
                 <span className={`status-pill ${isAdmin ? "admin" : "member"}`}>
-                  {isAdmin ? "👑 Administrator" : "🛍️ Zorexa Member"}
+                  {isAdmin ? "Administrator" : "Zorexa Member"}
                 </span>
               </p>
             </div>
             <button className="primary-modal-btn" onClick={() => { setActiveModalTab(null); setView("orders"); }}>
-              📦 View Order History
+              View Order History
             </button>
           </div>
         </div>
@@ -732,6 +767,9 @@ export default function App() {
           <p>Crafted with precision by <a href="https://www.instagram.com/vansh_soam__akkhepur" target="_blank" rel="noopener noreferrer">@vansh</a> & <a href="https://www.instagram.com/utsavgargg_" target="_blank" rel="noopener noreferrer">@utsav</a></p>
         </div>
       </footer>
+
+      <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
+      {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { RefreshCw, LogOut, Phone, MapPin, Package, Truck, CheckCircle, XCircle,
 import { API_BASE, authFetch } from "../config/api";
 
 const STATUS_ACTIONS = [
-  { status: "Shipped", label: "📦 Mark Shipped", color: "#0284c7", bg: "#e0f2fe" },
+  { status: "Shipped", label: "Mark Shipped", color: "#0284c7", bg: "#e0f2fe" },
   { status: "Out for Delivery", label: "🚚 Out for Delivery", color: "#d97706", bg: "#fef3c7" },
   { status: "Delivered", label: "✅ Mark Delivered", color: "#16a34a", bg: "#dcfce7" },
   { status: "Cancelled", label: "❌ Cancel Order", color: "#dc2626", bg: "#fee2e2" },
@@ -65,7 +65,7 @@ function DeliveryOrderCard({ order, onStatusUpdate }) {
             background: isFinal ? "#f1f5f9" : order.status === "Out for Delivery" ? "#fef3c7" : "#eef2ff",
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", flexShrink: 0,
           }}>
-            {isFinal ? (order.status === "Delivered" ? "✅" : "❌") : order.status === "Out for Delivery" ? "🚚" : "📦"}
+            {isFinal ? (order.status === "Delivered" ? "✅" : "❌") : order.status === "Out for Delivery" ? "🚚" : "•"}
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: "700", fontSize: "14px", color: "#1e293b" }}>
@@ -371,7 +371,7 @@ export default function DeliveryPanel({ user, onLogout }) {
               boxShadow: tab === "active" ? "0 2px 8px rgba(99,102,241,0.3)" : "none",
             }}
           >
-            📦 Active ({activeOrders.length})
+            Active ({activeOrders.length})
           </button>
           <button
             onClick={() => setTab("completed")}

@@ -92,6 +92,76 @@ const productsData = [
       { userName: "Shraddha Kapoor", rating: 4, comment: "Great for festive occasions. Color is exactly as shown." }
     ]
   },
+  {
+    name: "Zorexa 100% Gold Whey Isolate Protein (2kg / 4.4 lbs)",
+    price: 4499,
+    originalPrice: 6999,
+    image: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=800&auto=format&fit=crop&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=800&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80"
+    ],
+    category: "Gym & Supplements",
+    description: "Ultra-pure Whey Protein Isolate providing 25g fast-absorbing protein, 5.5g BCAAs per scoop. Zero added sugar, fast digestion for maximum muscle recovery & lean muscle gain.",
+    stock: 50,
+    rating: 4.8,
+    ratingCount: 14,
+    reviews: [
+      { userName: "Varun Sharma", rating: 5, comment: "Best protein powder! Rich Chocolate flavor mixes ultra smooth without lumps." },
+      { userName: "Sahil Khan", rating: 5, comment: "Great muscle recovery after heavy leg workouts. Authentic lab-tested quality." }
+    ]
+  },
+  {
+    name: "Explosive Pre-Workout Energy Matrix (300g)",
+    price: 1299,
+    originalPrice: 2199,
+    image: "https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=800&auto=format&fit=crop&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=800&auto=format&fit=crop&q=80"
+    ],
+    category: "Gym & Supplements",
+    description: "High performance pre-workout formula with 200mg Caffeine, 3g Beta-Alanine, and L-Citrulline for extreme muscle pump, endurance and intense gym workouts.",
+    stock: 45,
+    rating: 4.6,
+    ratingCount: 9,
+    reviews: [
+      { userName: "Arjun Rampal", rating: 5, comment: "Insane pump and energy! Keeps me going throughout 2 hours of heavy lifting." }
+    ]
+  },
+  {
+    name: "Micronized Creatine Monohydrate (250g Unflavored)",
+    price: 699,
+    originalPrice: 1199,
+    image: "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=800&auto=format&fit=crop&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=800&auto=format&fit=crop&q=80"
+    ],
+    category: "Gym & Supplements",
+    description: "100% Pure Unadulterated Micronized Creatine Monohydrate (3g Creapure per serving). Boosts muscle strength, power output, and intracellular hydration.",
+    stock: 60,
+    rating: 4.9,
+    ratingCount: 22,
+    reviews: [
+      { userName: "Vikram Malhotra", rating: 5, comment: "Noticed strength gains in bench press within 10 days of taking 3g daily." }
+    ]
+  },
+  {
+    name: "Night Recovery Micellar Casein Protein (1kg)",
+    price: 2799,
+    originalPrice: 3999,
+    image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80"
+    ],
+    category: "Gym & Supplements",
+    description: "Slow-digesting 24g slow-release casein protein per serving. Sustains muscle recovery overnight for 8 continuous hours during sleep to prevent muscle breakdown.",
+    stock: 30,
+    rating: 4.7,
+    ratingCount: 8,
+    reviews: [
+      { userName: "Karan Mehta", rating: 5, comment: "Tastes great with cold milk before bed. No morning muscle soreness!" }
+    ]
+  }
 ];
 
 const seed = async () => {

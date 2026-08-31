@@ -425,7 +425,7 @@ export default function CheckoutPage({
               {/* Delivery address summary */}
               <div className="checkout-addr-summary">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <strong style={{ fontSize: "14px" }}>📦 Delivering to:</strong>
+                  <strong style={{ fontSize: "14px" }}>Delivering to:</strong>
                   <button
                     onClick={() => setStep(0)}
                     style={{ fontSize: "12px", color: "#6366f1", background: "none", border: "none", cursor: "pointer", boxShadow: "none" }}
@@ -486,14 +486,14 @@ export default function CheckoutPage({
 
               {paymentMethod === "upi" && (
                 <div style={{ padding: "16px", background: "#eef2ff", borderRadius: "8px", marginTop: "1rem", fontSize: "13px", color: "#4f46e5", border: "1px solid #c7d2fe" }}>
-                  ✨ Pay securely using Razorpay sandbox/test environment.
+                  Pay securely using Razorpay sandbox/test environment.
                 </div>
               )}
 
               {/* Final Address & Items Summary */}
               <div className="checkout-final-summary">
                 <p><strong>📍 Address:</strong> {address.addressLine}, {address.city} - {address.pincode}</p>
-                <p style={{ marginTop: "6px" }}><strong>📦 {cart.reduce((s, i) => s + i.quantity, 0)} items</strong> • Z-Assured delivery in 2–5 days</p>
+                <p style={{ marginTop: "6px" }}><strong>{cart.reduce((s, i) => s + i.quantity, 0)} items</strong> • Z-Assured delivery in 2–5 days</p>
               </div>
             </div>
           )}
