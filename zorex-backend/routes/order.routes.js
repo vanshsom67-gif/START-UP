@@ -2,9 +2,22 @@ const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
 const Product = require("../models/Product");
-const { protect, adminOnly } = require("../middleware/auth");
+const { protect, adminOnly, deliveryOnly } = require("../middleware/auth");
 const { sendOrderEmail } = require("../config/email");
 const Razorpay = require("razorpay");
+const {
+  isDBConnected,
+  createOrder,
+  getUserOrders,
+  getAllOrders,
+  getOrderById,
+  updateOrderStatus,
+  assignDelivery,
+  getAssignedOrders,
+  getOrderStats,
+  updateProduct,
+  getProductById,
+} = require("../config/dataStore");
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_dummykey1234",
@@ -16,25 +29,40 @@ const deductOrderStock = async (items) => {
   for (const item of items) {
     if (!item.productId) continue;
     try {
-      const product = await Product.findById(item.productId);
-      if (!product) continue;
-
-      // Deduct overall stock
-      product.stock = Math.max(0, product.stock - (item.quantity || 1));
-
-      // Deduct matching variant stock
-      if (product.variants && product.variants.length > 0) {
-        const variant = product.variants.find(
-          (v) =>
-            v.size.toLowerCase() === (item.size || "").toLowerCase() &&
-            (v.color || "").toLowerCase() === (item.color || "").toLowerCase()
-        );
-        if (variant) {
-          variant.stock = Math.max(0, variant.stock - (item.quantity || 1));
+      if (isDBConnected()) {
+        const product = await Product.findById(item.productId);
+        if (!product) continue;
+        product.stock = Math.max(0, product.stock - (item.quantity || 1));
+        if (product.variants && product.variants.length > 0) {
+          const variant = product.variants.find(
+            (v) =>
+              v.size.toLowerCase() === (item.size || "").toLowerCase() &&
+              (v.color || "").toLowerCase() === (item.color || "").toLowerCase()
+          );
+          if (variant) {
+            variant.stock = Math.max(0, variant.stock - (item.quantity || 1));
+          }
+        }
+        await product.save();
+      } else {
+        const prod = await getProductById(item.productId);
+        if (prod) {
+          const newStock = Math.max(0, (prod.stock || 100) - (item.quantity || 1));
+          let newVariants = prod.variants;
+          if (newVariants && newVariants.length > 0) {
+            newVariants = newVariants.map((v) => {
+              if (
+                (v.size || "").toLowerCase() === (item.size || "").toLowerCase() &&
+                (v.color || "").toLowerCase() === (item.color || "").toLowerCase()
+              ) {
+                return { ...v, stock: Math.max(0, (v.stock || 0) - (item.quantity || 1)) };
+              }
+              return v;
+            });
+          }
+          await updateProduct(item.productId, { stock: newStock, variants: newVariants });
         }
       }
-
-      await product.save();
     } catch (err) {
       console.error(`Failed to deduct stock for product ${item.productId}:`, err);
     }
@@ -50,9 +78,72 @@ router.post("/", protect, async (req, res) => {
       return res.status(400).json({ message: "Items and total are required" });
     }
 
-    const order = await Order.create({
-      user: req.user._id,
-      customerEmail: req.user.email,
+    const userId = req.user._id || req.user.id;
+    const userEmail = req.user.email;
+
+    if (isDBConnected()) {
+      const order = await Order.create({
+        user: userId,
+        customerEmail: userEmail,
+        items,
+        subtotal: Number(subtotal) || Number(total),
+        discount: Number(discount) || 0,
+        couponCode: couponCode || "",
+        total: Number(total),
+        deliveryCharge: 0,
+        paymentMethod: paymentMethod || "WhatsApp",
+        shippingAddress: shippingAddress || "Via WhatsApp",
+        notes: notes || "",
+        isPaid: false,
+        trackingLogs: [
+          {
+            status: "Placed",
+            message: "Order placed successfully.",
+          },
+        ],
+      });
+
+      // If online payment (UPI or Card), initiate Razorpay Order creation
+      if (paymentMethod === "UPI" || paymentMethod === "Card") {
+        try {
+          const options = {
+            amount: Math.round(Number(total) * 100),
+            currency: "INR",
+            receipt: `receipt_order_${order._id}`,
+          };
+          const razorpayOrder = await razorpay.orders.create(options);
+          order.razorpayOrderId = razorpayOrder.id;
+          await order.save();
+
+          return res.status(201).json({
+            status: "success",
+            order,
+            razorpayOrder,
+            razorpayKeyId: process.env.RAZORPAY_KEY_ID || "rzp_test_dummykey1234",
+          });
+        } catch (rzpErr) {
+          console.error("Razorpay Order creation error:", rzpErr);
+          return res.status(500).json({
+            message: "Failed to initialize online payment",
+            error: rzpErr.message,
+          });
+        }
+      }
+
+      try {
+        await deductOrderStock(order.items);
+        await sendOrderEmail(order, req.user);
+      } catch (emailErr) {
+        console.error("Failed to send order email:", emailErr);
+      }
+
+      return res.status(201).json({ status: "success", order });
+    }
+
+    // Standalone JSON Mode
+    const order = await createOrder({
+      user: userId,
+      customerEmail: userEmail,
       items,
       subtotal: Number(subtotal) || Number(total),
       discount: Number(discount) || 0,
@@ -63,44 +154,8 @@ router.post("/", protect, async (req, res) => {
       shippingAddress: shippingAddress || "Via WhatsApp",
       notes: notes || "",
       isPaid: false,
-      trackingLogs: [
-        {
-          status: "Placed",
-          message: "Order placed successfully.",
-        },
-      ],
     });
 
-    // If online payment (UPI or Card), initiate Razorpay Order creation
-    if (paymentMethod === "UPI" || paymentMethod === "Card") {
-      try {
-        const options = {
-          amount: Math.round(Number(total) * 100), // in paisa
-          currency: "INR",
-          receipt: `receipt_order_${order._id}`,
-        };
-        const razorpayOrder = await razorpay.orders.create(options);
-
-        // Update order with razorpayOrderId
-        order.razorpayOrderId = razorpayOrder.id;
-        await order.save();
-
-        return res.status(201).json({
-          status: "success",
-          order,
-          razorpayOrder,
-          razorpayKeyId: process.env.RAZORPAY_KEY_ID || "rzp_test_dummykey1234",
-        });
-      } catch (rzpErr) {
-        console.error("Razorpay Order creation error:", rzpErr);
-        return res.status(500).json({
-          message: "Failed to initialize online payment",
-          error: rzpErr.message,
-        });
-      }
-    }
-
-    // For offline/manual payments (WhatsApp, COD), send email invoice immediately
     try {
       await deductOrderStock(order.items);
       await sendOrderEmail(order, req.user);
@@ -124,44 +179,39 @@ router.post("/verify-payment", protect, async (req, res) => {
       return res.status(400).json({ message: "All payment credentials are required" });
     }
 
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+    if (isDBConnected()) {
+      const order = await Order.findById(orderId);
+      if (!order) return res.status(404).json({ message: "Order not found" });
+
+      const crypto = require("crypto");
+      const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "dummysecret1234");
+      hmac.update(razorpayOrderId + "|" + razorpayPaymentId);
+      const generatedSignature = hmac.digest("hex");
+
+      if (generatedSignature !== razorpaySignature) {
+        return res.status(400).json({ message: "Invalid payment signature verification failed" });
+      }
+
+      order.isPaid = true;
+      order.razorpayPaymentId = razorpayPaymentId;
+      order.razorpayOrderId = razorpayOrderId;
+      order.razorpaySignature = razorpaySignature;
+      order.status = "Confirmed";
+      await order.save();
+
+      try {
+        await deductOrderStock(order.items);
+        await sendOrderEmail(order, req.user);
+      } catch (e) {}
+
+      return res.json({ status: "success", order });
     }
 
-    // Verify payment signature
-    const crypto = require("crypto");
-    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "dummysecret1234");
-    hmac.update(razorpayOrderId + "|" + razorpayPaymentId);
-    const generatedSignature = hmac.digest("hex");
+    const order = await getOrderById(orderId);
+    if (!order) return res.status(404).json({ message: "Order not found" });
 
-    if (generatedSignature !== razorpaySignature) {
-      return res.status(400).json({ message: "Invalid payment signature verification failed" });
-    }
-
-    // Update order status
-    order.isPaid = true;
-    order.razorpayPaymentId = razorpayPaymentId;
-    order.razorpayOrderId = razorpayOrderId;
-    order.razorpaySignature = razorpaySignature;
-    order.status = "Confirmed"; // Automatically confirm upon successful online payment
-    await order.save();
-
-    // Deduct stock upon successful payment verification
-    try {
-      await deductOrderStock(order.items);
-    } catch (stockErr) {
-      console.error("Stock deduction failed on verify-payment:", stockErr);
-    }
-
-    // Send invoice email confirmation
-    try {
-      await sendOrderEmail(order, req.user);
-    } catch (emailErr) {
-      console.error("Email sending failed on verification:", emailErr);
-    }
-
-    res.json({ status: "success", order });
+    const updated = await updateOrderStatus(orderId, "Confirmed", "Online Payment Verified successfully.");
+    res.json({ status: "success", order: updated });
   } catch (error) {
     console.error("Verify payment error:", error);
     res.status(500).json({ message: "Could not verify payment" });
@@ -171,11 +221,17 @@ router.post("/verify-payment", protect, async (req, res) => {
 // ─── GET /api/orders/mine — My own orders (Protected) ─────────────────
 router.get("/mine", protect, async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id })
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .populate("deliveryPartner", "name phone");
+    const userId = req.user._id || req.user.id;
+    if (isDBConnected()) {
+      const orders = await Order.find({ user: userId })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .populate("deliveryPartner", "name phone");
 
+      return res.json({ status: "success", count: orders.length, orders });
+    }
+
+    const orders = await getUserOrders(userId);
     res.json({ status: "success", count: orders.length, orders });
   } catch (error) {
     res.status(500).json({ message: "Could not fetch your orders" });
@@ -187,24 +243,35 @@ router.get("/", protect, adminOnly, async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
 
-    let query = {};
-    if (status) query.status = status;
+    if (isDBConnected()) {
+      let query = {};
+      if (status) query.status = status;
 
-    const skip = (Number(page) - 1) * Number(limit);
-    const total = await Order.countDocuments(query);
-    const orders = await Order.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(Number(limit))
-      .populate("user", "name email phone")
-      .populate("deliveryPartner", "name email phone");
+      const skip = (Number(page) - 1) * Number(limit);
+      const total = await Order.countDocuments(query);
+      const orders = await Order.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .populate("user", "name email phone")
+        .populate("deliveryPartner", "name email phone");
 
+      return res.json({
+        status: "success",
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+        orders,
+      });
+    }
+
+    const all = await getAllOrders({ status });
     res.json({
       status: "success",
-      total,
-      page: Number(page),
-      pages: Math.ceil(total / Number(limit)),
-      orders,
+      total: all.length,
+      page: 1,
+      pages: 1,
+      orders: all,
     });
   } catch (error) {
     res.status(500).json({ message: "Could not fetch orders" });
@@ -223,56 +290,70 @@ router.patch("/:id", protect, adminOnly, async (req, res) => {
       });
     }
 
-    const order = await Order.findById(req.params.id);
+    if (isDBConnected()) {
+      const order = await Order.findById(req.params.id);
+      if (!order) return res.status(404).json({ message: "Order not found" });
+
+      order.status = status;
+      order.trackingLogs.push({
+        status,
+        message: `Order status updated to ${status} by Administrator.`,
+      });
+      
+      await order.save();
+      return res.json({ status: "success", order });
+    }
+
+    const order = await updateOrderStatus(req.params.id, status, `Order status updated to ${status} by Administrator.`);
     if (!order) return res.status(404).json({ message: "Order not found" });
-
-    order.status = status;
-    order.trackingLogs.push({
-      status,
-      message: `Order status updated to ${status} by Administrator.`,
-    });
-    
-    await order.save();
-
     res.json({ status: "success", order });
   } catch (error) {
     res.status(500).json({ message: "Could not update order" });
   }
 });
 
-// ─── GET /api/orders/stats — Stats for admin dashboard ────────────────
+// ─── GET /api/orders/stats/summary — Stats for admin dashboard ─────────
 router.get("/stats/summary", protect, adminOnly, async (req, res) => {
   try {
-    const totalOrders = await Order.countDocuments();
-    const totalRevenue = await Order.aggregate([
-      { $match: { status: { $ne: "Cancelled" } } },
-      { $group: { _id: null, total: { $sum: "$total" } } },
-    ]);
-    const pendingOrders = await Order.countDocuments({ status: "Placed" });
-    const deliveredOrders = await Order.countDocuments({ status: "Delivered" });
+    if (isDBConnected()) {
+      const totalOrders = await Order.countDocuments();
+      const totalRevenue = await Order.aggregate([
+        { $match: { status: { $ne: "Cancelled" } } },
+        { $group: { _id: null, total: { $sum: "$total" } } },
+      ]);
+      const pendingOrders = await Order.countDocuments({ status: "Placed" });
+      const deliveredOrders = await Order.countDocuments({ status: "Delivered" });
 
-    res.json({
-      status: "success",
-      stats: {
-        totalOrders,
-        totalRevenue: totalRevenue[0]?.total || 0,
-        pendingOrders,
-        deliveredOrders,
-      },
-    });
+      return res.json({
+        status: "success",
+        stats: {
+          totalOrders,
+          totalRevenue: totalRevenue[0]?.total || 0,
+          pendingOrders,
+          deliveredOrders,
+        },
+      });
+    }
+
+    const stats = await getOrderStats();
+    res.json({ status: "success", stats });
   } catch (error) {
     res.status(500).json({ message: "Could not fetch stats" });
   }
 });
 
-// ─── GET /api/orders/assigned — Assigned orders for delivery partner (Protected) ───
-const { deliveryOnly } = require("../middleware/auth");
-
+// ─── GET /api/orders/assigned — Assigned orders for delivery partner ───
 router.get("/assigned", protect, deliveryOnly, async (req, res) => {
   try {
-    const orders = await Order.find({ deliveryPartner: req.user._id })
-      .sort({ createdAt: -1 })
-      .populate("user", "name email phone");
+    const partnerId = req.user._id || req.user.id;
+    if (isDBConnected()) {
+      const orders = await Order.find({ deliveryPartner: partnerId })
+        .sort({ createdAt: -1 })
+        .populate("user", "name email phone");
+      return res.json({ status: "success", count: orders.length, orders });
+    }
+
+    const orders = await getAssignedOrders(partnerId);
     res.json({ status: "success", count: orders.length, orders });
   } catch (error) {
     console.error("Fetch assigned orders error:", error);
@@ -285,24 +366,35 @@ router.patch("/:id/assign-delivery", protect, adminOnly, async (req, res) => {
   try {
     const { deliveryPartner, courierName, trackingId, estimatedDeliveryDate } = req.body;
 
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: "Order not found" });
+    if (isDBConnected()) {
+      const order = await Order.findById(req.params.id);
+      if (!order) return res.status(404).json({ message: "Order not found" });
 
-    order.deliveryPartner = deliveryPartner || null;
-    order.courierName = courierName || "";
-    order.trackingId = trackingId || "";
-    order.estimatedDeliveryDate = estimatedDeliveryDate ? new Date(estimatedDeliveryDate) : null;
-    
-    if (order.status === "Placed") {
-      order.status = "Confirmed";
+      order.deliveryPartner = deliveryPartner || null;
+      order.courierName = courierName || "";
+      order.trackingId = trackingId || "";
+      order.estimatedDeliveryDate = estimatedDeliveryDate ? new Date(estimatedDeliveryDate) : null;
+      
+      if (order.status === "Placed") {
+        order.status = "Confirmed";
+      }
+
+      order.trackingLogs.push({
+        status: order.status,
+        message: `Delivery assigned. Courier: ${courierName || "Local Delivery Partner"}, Tracking ID: ${trackingId || "Local-ZX"}.`,
+      });
+
+      await order.save();
+      return res.json({ status: "success", order });
     }
 
-    order.trackingLogs.push({
-      status: order.status,
-      message: `Delivery assigned. Courier: ${courierName || "Local Delivery Partner"}, Tracking ID: ${trackingId || "Local-ZX"}.`,
+    const order = await assignDelivery(req.params.id, {
+      deliveryPartner,
+      courierName,
+      trackingId,
+      estimatedDeliveryDate,
     });
-
-    await order.save();
+    if (!order) return res.status(404).json({ message: "Order not found" });
     res.json({ status: "success", order });
   } catch (error) {
     console.error("Assign delivery error:", error);
@@ -320,22 +412,30 @@ router.patch("/:id/delivery-status", protect, deliveryOnly, async (req, res) => 
       return res.status(400).json({ message: `Valid delivery statuses: ${validStatuses.join(", ")}` });
     }
 
-    const order = await Order.findOne({ _id: req.params.id, deliveryPartner: req.user._id });
-    if (!order) {
-      return res.status(404).json({ message: "Order not found or not assigned to you" });
+    const partnerId = req.user._id || req.user.id;
+
+    if (isDBConnected()) {
+      const order = await Order.findOne({ _id: req.params.id, deliveryPartner: partnerId });
+      if (!order) {
+        return res.status(404).json({ message: "Order not found or not assigned to you" });
+      }
+
+      order.status = status;
+      if (status === "Delivered" && order.paymentMethod === "COD") {
+        order.isPaid = true;
+      }
+
+      order.trackingLogs.push({
+        status,
+        message: message || `Order status updated to ${status} by delivery partner.`,
+      });
+
+      await order.save();
+      return res.json({ status: "success", order });
     }
 
-    order.status = status;
-    if (status === "Delivered" && order.paymentMethod === "COD") {
-      order.isPaid = true;
-    }
-
-    order.trackingLogs.push({
-      status,
-      message: message || `Order status updated to ${status} by delivery partner.`,
-    });
-
-    await order.save();
+    const order = await updateOrderStatus(req.params.id, status, message || `Order status updated to ${status} by delivery partner.`);
+    if (!order) return res.status(404).json({ message: "Order not found" });
     res.json({ status: "success", order });
   } catch (error) {
     console.error("Update delivery status error:", error);

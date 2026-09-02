@@ -3,7 +3,7 @@ import {
   ArrowLeft, Heart, ShoppingCart, Zap, Star,
   Truck, Shield, RotateCcw, Share2, ChevronRight, MapPin
 } from "lucide-react";
-import { API_BASE, authFetch } from "../config/api";
+import { API_BASE, authFetch, getImageUrl } from "../config/api";
 
 export default function ProductDetail({
   product,
@@ -59,12 +59,7 @@ export default function ProductDetail({
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState("");
 
-  const getImageUrl = (img) => {
-    if (!img) return "/images/placeholder.jpg";
-    return img.startsWith("http") ? img : `${API_BASE}${img}`;
-  };
-
-  const activeImageUrl = getImageUrl(productImages[activeImageIndex]);
+  const activeImageUrl = getImageUrl(productImages[activeImageIndex], localProduct.category);
 
   // Find matching variant to check stock
   const matchingVariant = hasVariants
@@ -154,6 +149,15 @@ export default function ProductDetail({
     setReviewSubmitting(true);
     setReviewError("");
     setReviewSuccess("");
+
+    const currentUser = JSON.parse(localStorage.getItem("zorex_user") || "{}");
+    const optimisticReview = {
+      userName: currentUser?.name || "Verified Customer",
+      rating: Number(reviewRating),
+      comment: reviewComment.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
     try {
       const res = await authFetch(`${API_BASE}/api/products/${localProduct._id || localProduct.id}/reviews`, {
         method: "POST",
@@ -166,9 +170,21 @@ export default function ProductDetail({
       if (!res.ok) {
         throw new Error(data.message || "Failed to submit review");
       }
-      setReviewSuccess("Review submitted successfully! Thank you.");
+      setReviewSuccess("✓ Review submitted successfully! Thank you for your feedback.");
       setReviewComment("");
-      setLocalProduct(data.product);
+
+      if (data.product) {
+        setLocalProduct(data.product);
+      } else {
+        const updatedReviews = [optimisticReview, ...(localProduct.reviews || [])];
+        const newAvg = (updatedReviews.reduce((s, r) => s + r.rating, 0) / updatedReviews.length);
+        setLocalProduct((prev) => ({
+          ...prev,
+          reviews: updatedReviews,
+          rating: Math.round(newAvg * 10) / 10,
+          ratingCount: (prev.ratingCount || 0) + 1,
+        }));
+      }
     } catch (err) {
       console.error(err);
       setReviewError(err.message || "Something went wrong. Please try again.");
@@ -226,9 +242,14 @@ export default function ProductDetail({
                     onClick={() => setActiveImageIndex(idx)}
                   >
                     <img
-                      src={getImageUrl(img)}
+                      src={getImageUrl(img, localProduct.category)}
                       alt={`${localProduct.name} view ${idx + 1}`}
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      onError={(e) => {
+                        e.target.src = localProduct.category?.includes("Gym") || localProduct.category?.includes("Supplement")
+                          ? "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=400&q=80"
+                          : "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=400&q=80";
+                      }}
                     />
                   </div>
                 ))}
@@ -246,7 +267,17 @@ export default function ProductDetail({
               >
                 <Heart size={20} fill={isWishlisted ? "#ec4899" : "none"} />
               </button>
-              <img src={activeImageUrl} alt={localProduct.name} className="pd-main-image" style={{ objectFit: "contain", maxHeight: "450px" }} />
+              <img
+                src={activeImageUrl}
+                alt={localProduct.name}
+                className="pd-main-image"
+                style={{ objectFit: "contain", maxHeight: "450px" }}
+                onError={(e) => {
+                  e.target.src = localProduct.category?.includes("Gym") || localProduct.category?.includes("Supplement")
+                    ? "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=800&q=80"
+                    : "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=800&q=80";
+                }}
+              />
             </div>
           </div>
 
@@ -678,7 +709,7 @@ export default function ProductDetail({
           <h2 className="section-title">Similar Products</h2>
           <div className="pd-related-grid">
             {relatedProducts.slice(0, 4).map((p) => {
-              const img = p.image?.startsWith("http") ? p.image : `${API_BASE}${p.image}`;
+              const img = getImageUrl(p.image, p.category);
               const op = p.originalPrice || Math.round(p.price * 1.8);
               const disc = Math.round(((op - p.price) / op) * 100);
               return (
@@ -688,7 +719,15 @@ export default function ProductDetail({
                   onClick={() => onRelatedClick(p)}
                 >
                   <div className="pd-related-img-wrap">
-                    <img src={img} alt={p.name} />
+                    <img
+                      src={img}
+                      alt={p.name}
+                      onError={(e) => {
+                        e.target.src = p.category?.includes("Gym") || p.category?.includes("Supplement")
+                          ? "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=400&q=80"
+                          : "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=400&q=80";
+                      }}
+                    />
                     {disc > 0 && <span className="pd-related-disc">{disc}% off</span>}
                   </div>
                   <p className="pd-related-name">{p.name}</p>

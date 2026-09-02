@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { isDBConnected, findUserById } = require("../config/dataStore");
 
 // ─── Middleware: Verify JWT Token ─────────────────────────────────────
 const protect = async (req, res, next) => {
@@ -22,10 +23,17 @@ const protect = async (req, res, next) => {
     }
 
     // Token verify karo
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const secret = process.env.JWT_SECRET || "zorexa_dev_secret_key_2026_jwt_token";
+    const decoded = jwt.verify(token, secret);
 
-    // User DB mein exist karta hai kya?
-    const currentUser = await User.findById(decoded.id);
+    // User DB / JSON store se uthao
+    let currentUser = null;
+    if (isDBConnected()) {
+      currentUser = await User.findById(decoded.id);
+    } else {
+      currentUser = await findUserById(decoded.id);
+    }
+
     if (!currentUser) {
       return res.status(401).json({
         status: "fail",
@@ -33,7 +41,7 @@ const protect = async (req, res, next) => {
       });
     }
 
-    if (!currentUser.isActive) {
+    if (currentUser.isActive === false) {
       return res.status(403).json({
         status: "fail",
         message: "Your account has been deactivated.",
@@ -78,7 +86,8 @@ const deliveryOnly = (req, res, next) => {
 
 // ─── Helper: Sign JWT Token ───────────────────────────────────────────
 const signToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+  const secret = process.env.JWT_SECRET || "zorexa_dev_secret_key_2026_jwt_token";
+  return jwt.sign({ id: userId }, secret, {
     expiresIn: process.env.JWT_EXPIRES_IN || "7d",
   });
 };

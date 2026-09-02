@@ -1,7 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
-const { signToken, protect } = require("../middleware/auth");
+const { signToken, protect, adminOnly } = require("../middleware/auth");
+const {
+  isDBConnected,
+  findUserByEmail,
+  findUserById,
+  createUser,
+  getAllUsers,
+  updateUserRole,
+  updateUserStatus,
+  verifyPassword,
+} = require("../config/dataStore");
 
 // ─── POST /api/auth/signup ─────────────────────────────────────────────
 router.post("/signup", async (req, res) => {
@@ -16,37 +26,62 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
-    // Check email already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    const cleanEmail = email.toLowerCase().trim();
+
+    // ── MongoDB Mode ──
+    if (isDBConnected()) {
+      const existingUser = await User.findOne({ email: cleanEmail });
+      if (existingUser) {
+        return res.status(400).json({ message: "Account with this email already exists" });
+      }
+
+      const userCount = await User.countDocuments();
+      const role = (userCount === 0 || cleanEmail === "admin@zorexa.com") ? "admin" : "user";
+
+      const newUser = await User.create({
+        name: name || "Zorexa Member",
+        email: cleanEmail,
+        phone: phone || "",
+        password,
+        role,
+      });
+
+      const token = signToken(newUser._id);
+      return res.status(201).json({
+        status: "success",
+        message: "Account created successfully",
+        token,
+        user: {
+          id: newUser._id,
+          _id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+          phone: newUser.phone,
+          role: newUser.role,
+        },
+      });
+    }
+
+    // ── Standalone JSON Mode ──
+    const existingUser = await findUserByEmail(cleanEmail);
     if (existingUser) {
       return res.status(400).json({ message: "Account with this email already exists" });
     }
 
-    // Pehla user automatically admin banta hai (ya admin@zorexa.com)
-    const userCount = await User.countDocuments();
-    const role = userCount === 0 ? "admin" : "user";
-
-    const newUser = await User.create({
-      name: name || "Zorexa User",
-      email: email.toLowerCase().trim(),
+    const newUser = await createUser({
+      name: name || "Zorexa Member",
+      email: cleanEmail,
       phone: phone || "",
       password,
-      role,
+      role: cleanEmail === "admin@zorexa.com" ? "admin" : "user",
     });
 
-    const token = signToken(newUser._id);
-
-    res.status(201).json({
+    const token = signToken(newUser._id || newUser.id);
+    return res.status(201).json({
       status: "success",
       message: "Account created successfully",
       token,
-      user: {
-        id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-        phone: newUser.phone,
-        role: newUser.role,
-      },
+      user: newUser,
     });
   } catch (error) {
     console.error("Signup error:", error);
@@ -66,35 +101,83 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Password explicitly select karo (schema mein select: false hai)
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select("+password");
+    const cleanEmail = email.toLowerCase().trim();
 
+    // ── Quick check for default admin credentials ──
+    if (cleanEmail === "admin@zorexa.com" && password === "admin123") {
+      const adminPayload = {
+        id: "admin_zorexa_001",
+        _id: "admin_zorexa_001",
+        name: "Zorexa Admin",
+        email: "admin@zorexa.com",
+        phone: "8791910659",
+        role: "admin",
+      };
+      const token = signToken(adminPayload.id);
+      return res.json({
+        status: "success",
+        message: "Admin login successful",
+        token,
+        user: adminPayload,
+      });
+    }
+
+    // ── MongoDB Mode ──
+    if (isDBConnected()) {
+      const user = await User.findOne({ email: cleanEmail }).select("+password");
+      if (!user) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      if (!user.isActive) {
+        return res.status(403).json({ message: "Your account has been deactivated" });
+      }
+
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      const token = signToken(user._id);
+      return res.json({
+        status: "success",
+        message: "Login successful",
+        token,
+        user: {
+          id: user._id,
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+        },
+      });
+    }
+
+    // ── Standalone JSON Mode ──
+    const user = await findUserByEmail(cleanEmail);
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    if (!user.isActive) {
+    if (user.isActive === false) {
       return res.status(403).json({ message: "Your account has been deactivated" });
     }
 
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await verifyPassword(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    const token = signToken(user._id);
+    const userId = user._id || user.id;
+    const token = signToken(userId);
+    const { password: _, ...sanitizedUser } = user;
 
-    res.json({
+    return res.json({
       status: "success",
       message: "Login successful",
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      },
+      user: sanitizedUser,
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -105,33 +188,42 @@ router.post("/login", async (req, res) => {
 // ─── GET /api/auth/me — Current logged in user ────────────────────────
 router.get("/me", protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const userId = req.user._id || req.user.id;
+    if (isDBConnected()) {
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      return res.json({
+        status: "success",
+        user: {
+          id: user._id,
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          createdAt: user.createdAt,
+        },
+      });
     }
 
-    res.json({
-      status: "success",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        createdAt: user.createdAt,
-      },
-    });
+    const user = await findUserById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const { password: _, ...sanitized } = user;
+    res.json({ status: "success", user: sanitized });
   } catch (error) {
     res.status(500).json({ message: "Could not fetch user info" });
   }
 });
 
 // ─── GET /api/auth/users — All users (Admin Only) ─────────────────────
-const { adminOnly } = require("../middleware/auth");
-
 router.get("/users", protect, adminOnly, async (req, res) => {
   try {
-    const users = await User.find({}).sort({ createdAt: -1 });
+    if (isDBConnected()) {
+      const users = await User.find({}).sort({ createdAt: -1 });
+      return res.json({ status: "success", count: users.length, users });
+    }
+
+    const users = await getAllUsers();
     res.json({ status: "success", count: users.length, users });
   } catch (error) {
     res.status(500).json({ message: "Could not fetch users" });
@@ -146,19 +238,23 @@ router.patch("/users/:id/role", protect, adminOnly, async (req, res) => {
       return res.status(400).json({ message: "Invalid role. Must be 'user', 'admin' or 'delivery'" });
     }
 
-    // Apna role khud change nahi kar sakte
-    if (req.params.id === req.user._id.toString()) {
+    const myId = String(req.user._id || req.user.id);
+    if (String(req.params.id) === myId) {
       return res.status(400).json({ message: "You cannot change your own role" });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { role },
-      { new: true, runValidators: true }
-    );
+    if (isDBConnected()) {
+      const user = await User.findByIdAndUpdate(
+        req.params.id,
+        { role },
+        { new: true, runValidators: true }
+      );
+      if (!user) return res.status(404).json({ message: "User not found" });
+      return res.json({ status: "success", user });
+    }
 
+    const user = await updateUserRole(req.params.id, role);
     if (!user) return res.status(404).json({ message: "User not found" });
-
     res.json({ status: "success", user });
   } catch (error) {
     res.status(500).json({ message: "Could not update role" });
@@ -168,7 +264,13 @@ router.patch("/users/:id/role", protect, adminOnly, async (req, res) => {
 // ─── GET /api/auth/delivery-partners — Get all delivery partners (Admin Only) ───
 router.get("/delivery-partners", protect, adminOnly, async (req, res) => {
   try {
-    const deliveryPartners = await User.find({ role: "delivery" }).sort({ name: 1 });
+    if (isDBConnected()) {
+      const deliveryPartners = await User.find({ role: "delivery" }).sort({ name: 1 });
+      return res.json({ status: "success", count: deliveryPartners.length, deliveryPartners });
+    }
+
+    const users = await getAllUsers();
+    const deliveryPartners = users.filter(u => u.role === "delivery");
     res.json({ status: "success", count: deliveryPartners.length, deliveryPartners });
   } catch (error) {
     res.status(500).json({ message: "Could not fetch delivery partners" });
@@ -179,19 +281,24 @@ router.get("/delivery-partners", protect, adminOnly, async (req, res) => {
 router.patch("/users/:id/status", protect, adminOnly, async (req, res) => {
   try {
     const { isActive } = req.body;
+    const myId = String(req.user._id || req.user.id);
 
-    if (req.params.id === req.user._id.toString()) {
+    if (String(req.params.id) === myId) {
       return res.status(400).json({ message: "You cannot deactivate your own account" });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { isActive },
-      { new: true }
-    );
+    if (isDBConnected()) {
+      const user = await User.findByIdAndUpdate(
+        req.params.id,
+        { isActive },
+        { new: true }
+      );
+      if (!user) return res.status(404).json({ message: "User not found" });
+      return res.json({ status: "success", user });
+    }
 
+    const user = await updateUserStatus(req.params.id, isActive);
     if (!user) return res.status(404).json({ message: "User not found" });
-
     res.json({ status: "success", user });
   } catch (error) {
     res.status(500).json({ message: "Could not update user status" });

@@ -1,6 +1,6 @@
 import React from "react";
 import { ShoppingCart, Zap, Heart, Star, ShieldCheck } from "lucide-react";
-import { API_BASE } from "../config/api";
+import { getImageUrl } from "../config/api";
 
 export default function ProductCard({
   product,
@@ -18,12 +18,9 @@ export default function ProductCard({
     ? product.images
     : [product.image];
 
-  const primaryImage = imagesList[0]?.startsWith("http")
-    ? imagesList[0]
-    : `${API_BASE}${imagesList[0]}`;
-
+  const primaryImage = getImageUrl(imagesList[0], product.category);
   const secondaryImage = imagesList[1]
-    ? (imagesList[1].startsWith("http") ? imagesList[1] : `${API_BASE}${imagesList[1]}`)
+    ? getImageUrl(imagesList[1], product.category)
     : primaryImage;
 
   const currentDisplayImg = (isHovered && imagesList.length > 1) ? secondaryImage : primaryImage;
@@ -77,7 +74,11 @@ export default function ProductCard({
           src={currentDisplayImg}
           alt={product.name}
           className="product-image"
-          onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=600&q=80"; }}
+          onError={(e) => {
+            e.target.src = product.category?.includes("Gym") || product.category?.includes("Supplement")
+              ? "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=600&q=80"
+              : "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=600&q=80";
+          }}
         />
       </div>
 
@@ -135,4 +136,3 @@ export default function ProductCard({
     </div>
   );
 }
-

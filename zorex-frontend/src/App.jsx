@@ -15,7 +15,10 @@ import BioLinkPage from "./components/BioLinkPage";
 import BackendMonitor from "./components/BackendMonitor";
 import FloatingPortalBar from "./components/FloatingPortalBar";
 import Toast, { useToast } from "./components/Toast";
-import { API_BASE, authFetch } from "./config/api";
+import SpinWheelModal from "./components/SpinWheelModal";
+import CartDrawer from "./components/CartDrawer";
+import ProfileModal from "./components/ProfileModal";
+import { API_BASE, authFetch, getImageUrl } from "./config/api";
 import { SlidersHorizontal } from "lucide-react";
 
 const DEFAULT_FILTERS = {
@@ -69,6 +72,9 @@ export default function App() {
 
   // Profile and Footer modals
   const [activeModalTab, setActiveModalTab] = useState(null);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
+  const [spinWheelOpen, setSpinWheelOpen] = useState(false);
   const [aboutUsOpen, setAboutUsOpen] = useState(false);
   const [contactUsOpen, setContactUsOpen] = useState(false);
   const [backendMonitorOpen, setBackendMonitorOpen] = useState(false);
@@ -148,6 +154,7 @@ export default function App() {
       addToast(`${product.name} added to cart 🛒`, "cart");
       return [...prev, { ...product, cartItemId, quantity: product.quantity || 1 }];
     });
+    setCartDrawerOpen(true);
   };
 
   const handleRemoveFromCart = (cartItemId) => {
@@ -283,14 +290,19 @@ export default function App() {
     user, cartCount, wishlistCount, isAdmin,
     searchQuery, onSearchChange: setSearchQuery,
     onLogout: handleLogout,
-    onCartClick: () => { goHome(); setTimeout(() => document.getElementById("cart")?.scrollIntoView({ behavior: "smooth" }), 100); },
+    onCartClick: () => setCartDrawerOpen(true),
     onWishlistClick: () => setView("wishlist"),
-    onProfileClick: () => setActiveModalTab("profile"),
+    onProfileClick: () => setProfileModalOpen(true),
     onOrdersClick: () => setView("orders"),
     onAdminClick: () => setView("admin"),
     onHomeClick: goHome,
     onBioLinkClick: () => setView("biolink"),
     onBackendMonitorClick: () => setBackendMonitorOpen(true),
+  };
+
+  const handleApplyCouponFromSpin = (code) => {
+    localStorage.setItem("won_coupon", code);
+    addToast(`🎉 Coupon "${code}" unlocked & applied to cart!`, "success");
   };
 
   // ── NOT LOGGED IN ─────────────────────────────────────────────────────
@@ -301,14 +313,66 @@ export default function App() {
     return <DeliveryPanel user={user} onLogout={handleLogout} />;
   }
 
+  const sharedModals = (
+    <>
+      <CartDrawer
+        isOpen={cartDrawerOpen}
+        onClose={() => setCartDrawerOpen(false)}
+        cart={cart}
+        onRemoveFromCart={handleRemoveFromCart}
+        onUpdateQuantity={handleUpdateQuantity}
+        onGoToCheckout={() => {
+          setCartDrawerOpen(false);
+          setView("checkout");
+        }}
+        onClearCart={handleClearCart}
+        onOpenSpinWheel={() => {
+          setCartDrawerOpen(false);
+          setSpinWheelOpen(true);
+        }}
+      />
+
+      <SpinWheelModal
+        isOpen={spinWheelOpen}
+        onClose={() => setSpinWheelOpen(false)}
+        onApplyCoupon={handleApplyCouponFromSpin}
+      />
+
+      <ProfileModal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        user={user}
+        onUpdateUser={(updated) => {
+          setUser(updated);
+          localStorage.setItem("zorex_user", JSON.stringify(updated));
+        }}
+        onLogout={handleLogout}
+        onGoToOrders={() => {
+          setProfileModalOpen(false);
+          setView("orders");
+        }}
+      />
+
+      <FloatingPortalBar
+        currentView={view}
+        onSelectView={setView}
+        onOpenBackendMonitor={() => setBackendMonitorOpen(true)}
+        onOpenSpinWheel={() => setSpinWheelOpen(true)}
+        user={user}
+      />
+
+      {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
+      <Toast toasts={toasts} onRemove={removeToast} />
+    </>
+  );
+
   // ── ADMIN PANEL ───────────────────────────────────────────────────────
   if (view === "admin" && isAdmin) {
     return (
       <>
         <Navbar {...navbarProps} />
         <AdminPanel user={user} onProductsChange={fetchProducts} onBack={goHome} />
-        <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
-        {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
+        {sharedModals}
       </>
     );
   }
@@ -325,8 +389,7 @@ export default function App() {
           onGoOrders={() => setView("orders")}
           onOpenBackendMonitor={() => setBackendMonitorOpen(true)}
         />
-        <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
-        {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
+        {sharedModals}
       </>
     );
   }
@@ -351,8 +414,7 @@ export default function App() {
           relatedProducts={related}
           onRelatedClick={goToProduct}
         />
-        <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
-        {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
+        {sharedModals}
       </>
     );
   }
@@ -371,8 +433,7 @@ export default function App() {
           onBuyNow={handleBuyNow}
           onProductClick={goToProduct}
         />
-        <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
-        {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
+        {sharedModals}
       </>
     );
   }
@@ -388,8 +449,7 @@ export default function App() {
           onBack={goHome}
           onOrderPlaced={handleOrderPlaced}
         />
-        <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
-        {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
+        {sharedModals}
       </>
     );
   }
@@ -404,8 +464,7 @@ export default function App() {
           onBack={goHome}
           onShopNow={goHome}
         />
-        <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
-        {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
+        {sharedModals}
       </>
     );
   }
@@ -454,7 +513,13 @@ export default function App() {
               .map(p => (
                 <div key={p._id || p.id} className="strip-card" onClick={() => goToProduct(p)}>
                   <div className="strip-img">
-                    <img src={p.image || "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=400&q=80"} alt={p.name} />
+                    <img
+                      src={getImageUrl(p.image, p.category)}
+                      alt={p.name}
+                      onError={(e) => {
+                        e.target.src = "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=400&q=80";
+                      }}
+                    />
                     <span className="strip-discount">
                       {Math.round(((p.originalPrice || p.price * 1.8) - p.price) / (p.originalPrice || p.price * 1.8) * 100)}% OFF
                     </span>
@@ -484,7 +549,13 @@ export default function App() {
                 .map(p => (
                   <div key={p._id || p.id} className="strip-card" onClick={() => goToProduct(p)}>
                     <div className="strip-img">
-                      <img src={p.image || "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=400&q=80"} alt={p.name} />
+                      <img
+                        src={getImageUrl(p.image, p.category)}
+                        alt={p.name}
+                        onError={(e) => {
+                          e.target.src = "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=400&q=80";
+                        }}
+                      />
                     </div>
                     <div className="strip-info">
                       <h4>{p.name}</h4>
@@ -768,8 +839,7 @@ export default function App() {
         </div>
       </footer>
 
-      <FloatingPortalBar currentView={view} onSelectView={setView} onOpenBackendMonitor={() => setBackendMonitorOpen(true)} user={user} />
-      {backendMonitorOpen && <BackendMonitor onClose={() => setBackendMonitorOpen(false)} />}
+      {sharedModals}
     </div>
   );
 }

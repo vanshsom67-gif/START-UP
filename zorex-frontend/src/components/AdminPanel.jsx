@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, Users,
   Plus, Pencil, Trash2, Check, X, RefreshCw, ChevronDown, ArrowLeft
 } from "lucide-react";
-import { API_BASE, authFetch } from "../config/api";
+import { API_BASE, authFetch, getImageUrl } from "../config/api";
 
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
@@ -98,6 +98,7 @@ function ProductsTab({ onProductsChange }) {
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [msg, setMsg] = useState({ text: "", type: "" });
+  const [searchTerm, setSearchTerm] = useState("");
 
   const emptyForm = { name: "", price: "", originalPrice: "", image: "", galleryImages: "", category: "Men's Clothing", description: "", stock: "100", rating: "4.2" };
   const [form, setForm] = useState(emptyForm);
@@ -317,6 +318,30 @@ function ProductsTab({ onProductsChange }) {
             <div>
               <label>Image Path / URL *</label>
               <input name="image" value={form.image} onChange={handleFormChange} placeholder="/images/hoodie.jpg  ya  https://..." required />
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px", alignItems: "center" }}>
+                <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Quick Presets:</span>
+                {[
+                  { label: "Hoodie", url: "/images/hoodie.jpg" },
+                  { label: "Kurti", url: "/images/kurti.jpg" },
+                  { label: "Formal Shirt", url: "/images/shirt for men.jpg" },
+                  { label: "Bellbottom", url: "/images/bellbottom.jpeg" },
+                  { label: "Whey Protein", url: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=800&auto=format&fit=crop&q=80" },
+                  { label: "Pre-Workout", url: "https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=800&auto=format&fit=crop&q=80" },
+                ].map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => setForm({ ...form, image: preset.url })}
+                    style={{
+                      padding: "2px 8px", fontSize: "11px", borderRadius: "4px",
+                      background: "#e2e8f0", border: "none", color: "#334155", cursor: "pointer",
+                      fontWeight: "500", textTransform: "none", boxShadow: "none",
+                    }}
+                  >
+                    + {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label>Additional Gallery Images (Comma separated URLs / paths)</label>
@@ -436,27 +461,56 @@ function ProductsTab({ onProductsChange }) {
       {loading ? (
         <div style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>Loading products...</div>
       ) : (
-        <div className="admin-table-wrapper">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Rating</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => {
-                const imgSrc = product.image?.startsWith("http") ? product.image : `${API_BASE}${product.image}`;
-                return (
+        <>
+          <div style={{ marginBottom: "16px", display: "flex", gap: "10px" }}>
+            <input
+              type="text"
+              placeholder="🔍 Search products by title or category..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                flex: 1, padding: "10px 14px", borderRadius: "8px",
+                border: "1px solid #e2e8f0", background: "white", fontSize: "13px",
+              }}
+            />
+          </div>
+
+          <div className="admin-table-wrapper">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Rating</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products
+                  .filter((p) =>
+                    !searchTerm ||
+                    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    p.category?.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((product) => {
+                    const imgSrc = getImageUrl(product.image, product.category);
+                    return (
                   <tr key={product._id}>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <img src={imgSrc} alt={product.name} style={{ width: "40px", height: "40px", objectFit: "contain", borderRadius: "4px", background: "#f8fafc", border: "1px solid #e2e8f0" }} />
+                        <img
+                          src={imgSrc}
+                          alt={product.name}
+                          style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "6px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+                          onError={(e) => {
+                            e.target.src = product.category?.includes("Gym") || product.category?.includes("Supplement")
+                              ? "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=100&q=80"
+                              : "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=100&q=80";
+                          }}
+                        />
                         <span style={{ fontWeight: "500", fontSize: "13px" }}>{product.name}</span>
                       </div>
                     </td>
@@ -491,6 +545,7 @@ function ProductsTab({ onProductsChange }) {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

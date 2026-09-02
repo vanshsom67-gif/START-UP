@@ -32,3 +32,22 @@ export const authFetch = async (url, options = {}) => {
 
   return response;
 };
+
+/**
+ * getImageUrl — Safe image URL resolver with category fallbacks
+ */
+export const getImageUrl = (imagePath, category = "") => {
+  if (!imagePath) {
+    if (category?.toLowerCase().includes("gym") || category?.toLowerCase().includes("supplement")) {
+      return "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=600&q=80";
+    }
+    return "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=600&q=80";
+  }
+
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://") || imagePath.startsWith("data:")) {
+    return imagePath;
+  }
+
+  const clean = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
+  return encodeURI(clean);
+};

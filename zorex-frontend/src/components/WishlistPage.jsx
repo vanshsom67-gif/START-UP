@@ -1,6 +1,6 @@
 import React from "react";
 import { Heart, ShoppingCart, Trash2, ArrowLeft, Zap } from "lucide-react";
-import { API_BASE } from "../config/api";
+import { getImageUrl } from "../config/api";
 
 export default function WishlistPage({
   wishlist,
@@ -60,9 +60,7 @@ export default function WishlistPage({
 
       <div className="wishlist-grid">
         {wishlistProducts.map((product) => {
-          const imageUrl = product.image?.startsWith("http")
-            ? product.image
-            : `${API_BASE}${product.image}`;
+          const imageUrl = getImageUrl(product.image, product.category);
           const originalPrice = product.originalPrice || Math.round(product.price * 1.8);
           const discount = Math.round(((originalPrice - product.price) / originalPrice) * 100);
           const rating = product.rating || 4.2;
@@ -88,7 +86,15 @@ export default function WishlistPage({
                 className="wishlist-img-wrap"
                 onClick={() => onProductClick(product)}
               >
-                <img src={imageUrl} alt={product.name} />
+                <img
+                  src={imageUrl}
+                  alt={product.name}
+                  onError={(e) => {
+                    e.target.src = product.category?.includes("Gym") || product.category?.includes("Supplement")
+                      ? "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=400&q=80"
+                      : "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=400&q=80";
+                  }}
+                />
               </div>
 
               {/* Info */}

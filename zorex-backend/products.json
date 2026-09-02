@@ -1,42 +1,214 @@
 [
   {
+    "_id": "prod_1",
     "id": 1,
     "name": "Short Kurti For Women",
     "price": 499,
+    "originalPrice": 899,
     "image": "/images/kurti.jpg",
+    "images": [
+      "/images/kurti.jpg",
+      "/images/kurti.jpg",
+      "/images/kurti.jpg"
+    ],
     "category": "Women's Clothing",
-    "description": "Beautiful and comfortable short kurti in traditional vibrant patterns. Soft cotton fabric, ideal for daily casual wear."
+    "description": "Beautiful and comfortable short kurti in traditional vibrant patterns. Soft cotton fabric, ideal for daily casual wear.",
+    "stock": 50,
+    "rating": 4.3,
+    "ratingCount": 3,
+    "variants": [
+      { "size": "S", "color": "Navy Blue", "stock": 15 },
+      { "size": "M", "color": "Navy Blue", "stock": 20 },
+      { "size": "L", "color": "Navy Blue", "stock": 15 }
+    ],
+    "reviews": [
+      { "userName": "Ritu Sharma", "rating": 5, "comment": "Amazing fit! The fabric is super soft cotton, perfect for summer." },
+      { "userName": "Neha Verma", "rating": 4, "comment": "Colors are very vibrant and look just like the picture. Highly recommend!" },
+      { "userName": "Aman Gupta", "rating": 4, "comment": "Bought it for my sister. She loved the traditional print. Good purchase." }
+    ],
+    "isActive": true
   },
   {
+    "_id": "prod_2",
     "id": 2,
     "name": "Hoodie",
     "price": 999,
+    "originalPrice": 1799,
     "image": "/images/hoodie.jpg",
+    "images": [
+      "/images/hoodie.jpg",
+      "/images/hoodie.jpg"
+    ],
     "category": "Men's Clothing",
-    "description": "Premium cotton-fleece blend hoodie. Cozy interior brush-fleece, durable stitching, perfect for streetwear aesthetics."
+    "description": "Premium cotton-fleece blend hoodie. Cozy interior brush-fleece, durable stitching, perfect for streetwear aesthetics.",
+    "stock": 30,
+    "rating": 4.5,
+    "ratingCount": 2,
+    "variants": [
+      { "size": "M", "color": "Jet Black", "stock": 10 },
+      { "size": "L", "color": "Jet Black", "stock": 15 },
+      { "size": "XL", "color": "Jet Black", "stock": 5 }
+    ],
+    "reviews": [
+      { "userName": "Kabir Singh", "rating": 5, "comment": "Absolutely premium quality hoodie. Best purchase under 1000!" },
+      { "userName": "Rohit Sen", "rating": 4, "comment": "Very comfortable and thick. Perfect for winters." }
+    ],
+    "isActive": true
   },
   {
+    "_id": "prod_4",
     "id": 4,
     "name": "Bell Bottom For Men",
     "price": 799,
+    "originalPrice": 1499,
     "image": "/images/bellbottom.jpeg",
+    "images": [
+      "/images/bellbottom.jpeg",
+      "/images/bellbottom.jpeg"
+    ],
     "category": "Men's Clothing",
-    "description": "Retro bellbottom denim pants. Classic flared fit with robust cotton weave, matching the 70s look in a modern cut."
+    "description": "Retro bellbottom denim pants. Classic flared fit with robust cotton weave, matching the 70s look in a modern cut.",
+    "stock": 25,
+    "rating": 4.0,
+    "ratingCount": 2,
+    "variants": [
+      { "size": "30", "color": "Washed Indigo", "stock": 8 },
+      { "size": "32", "color": "Washed Indigo", "stock": 10 },
+      { "size": "34", "color": "Washed Indigo", "stock": 7 }
+    ],
+    "reviews": [
+      { "userName": "Vicky Kaushal", "rating": 4, "comment": "Great retro vibes. The flare is just perfect." },
+      { "userName": "Aditya Roy", "rating": 4, "comment": "Good quality denim. Feels sturdy and comfortable." }
+    ],
+    "isActive": true
   },
   {
+    "_id": "prod_5",
     "id": 5,
     "name": "Formal Shirt For Men",
     "price": 799,
+    "originalPrice": 1399,
     "image": "/images/shirt for men.jpg",
+    "images": [
+      "/images/shirt for men.jpg",
+      "/images/shirt for men.jpg"
+    ],
     "category": "Men's Clothing",
-    "description": "Polished formal shirt. High quality breathable cotton fabric tailored for office meetings and formal celebrations."
+    "description": "Polished formal shirt. High quality breathable cotton fabric tailored for office meetings and formal celebrations.",
+    "stock": 40,
+    "rating": 4.5,
+    "ratingCount": 2,
+    "variants": [
+      { "size": "38 (S)", "color": "Crisp White", "stock": 12 },
+      { "size": "40 (M)", "color": "Crisp White", "stock": 18 },
+      { "size": "42 (L)", "color": "Crisp White", "stock": 10 }
+    ],
+    "reviews": [
+      { "userName": "Sameer Mehta", "rating": 5, "comment": "Premium fit and look. Best formal shirt at this price range." },
+      { "userName": "Deepak Joshi", "rating": 4, "comment": "Very neat stitching and breathable cotton fabric." }
+    ],
+    "isActive": true
   },
   {
+    "_id": "prod_6",
     "id": 6,
     "name": "Long Kurti For Women",
     "price": 699,
+    "originalPrice": 1299,
     "image": "/images/long kurti.jpg",
+    "images": [
+      "/images/long kurti.jpg",
+      "/images/long kurti.jpg",
+      "/images/long kurti.jpg"
+    ],
     "category": "Women's Clothing",
-    "description": "Full length elegant traditional kurti. Delicate embroidery patterns, suitable for weddings and festive family gatherings."
+    "description": "Full length elegant traditional kurti. Delicate embroidery patterns, suitable for weddings and festive family gatherings.",
+    "stock": 35,
+    "rating": 4.7,
+    "ratingCount": 3,
+    "variants": [
+      { "size": "M", "color": "Crimson Red", "stock": 15 },
+      { "size": "L", "color": "Crimson Red", "stock": 15 },
+      { "size": "XL", "color": "Crimson Red", "stock": 5 }
+    ],
+    "reviews": [
+      { "userName": "Pooja Patel", "rating": 5, "comment": "The embroidery is absolutely stunning! Looks very royal." },
+      { "userName": "Kriti Sanon", "rating": 5, "comment": "Beautiful design, fabric feels very luxurious. Fitting is perfect." },
+      { "userName": "Shraddha Kapoor", "rating": 4, "comment": "Great for festive occasions. Color is exactly as shown." }
+    ],
+    "isActive": true
+  },
+  {
+    "_id": "prod_7",
+    "id": 7,
+    "name": "Zorexa 100% Gold Whey Isolate Protein (2kg / 4.4 lbs)",
+    "price": 4499,
+    "originalPrice": 6999,
+    "image": "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=800&auto=format&fit=crop&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=800&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80"
+    ],
+    "category": "Gym & Supplements",
+    "description": "Ultra-pure Whey Protein Isolate providing 25g fast-absorbing protein, 5.5g BCAAs per scoop. Zero added sugar, fast digestion for maximum muscle recovery & lean muscle gain.",
+    "stock": 50,
+    "rating": 4.8,
+    "ratingCount": 14,
+    "variants": [
+      { "size": "2kg / 4.4 lbs", "color": "Rich Chocolate", "stock": 30 },
+      { "size": "2kg / 4.4 lbs", "color": "Vanilla Bean", "stock": 20 }
+    ],
+    "reviews": [
+      { "userName": "Varun Sharma", "rating": 5, "comment": "Best protein powder! Rich Chocolate flavor mixes ultra smooth without lumps." },
+      { "userName": "Sahil Khan", "rating": 5, "comment": "Great muscle recovery after heavy leg workouts. Authentic lab-tested quality." }
+    ],
+    "isActive": true
+  },
+  {
+    "_id": "prod_8",
+    "id": 8,
+    "name": "Explosive Pre-Workout Energy Matrix (300g)",
+    "price": 1299,
+    "originalPrice": 2199,
+    "image": "https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=800&auto=format&fit=crop&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=800&auto=format&fit=crop&q=80"
+    ],
+    "category": "Gym & Supplements",
+    "description": "High performance pre-workout formula with 200mg Caffeine, 3g Beta-Alanine, and L-Citrulline for extreme muscle pump, endurance and intense gym workouts.",
+    "stock": 45,
+    "rating": 4.6,
+    "ratingCount": 9,
+    "variants": [
+      { "size": "300g (30 Servings)", "color": "Blue Razz", "stock": 25 },
+      { "size": "300g (30 Servings)", "color": "Watermelon", "stock": 20 }
+    ],
+    "reviews": [
+      { "userName": "Arjun Rampal", "rating": 5, "comment": "Insane pump and energy! Keeps me going throughout 2 hours of heavy lifting." }
+    ],
+    "isActive": true
+  },
+  {
+    "_id": "prod_9",
+    "id": 9,
+    "name": "Micronized Creatine Monohydrate (250g Unflavored)",
+    "price": 699,
+    "originalPrice": 1199,
+    "image": "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=800&auto=format&fit=crop&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=800&auto=format&fit=crop&q=80"
+    ],
+    "category": "Gym & Supplements",
+    "description": "100% Pure Unadulterated Micronized Creatine Monohydrate (3g Creapure per serving). Boosts muscle strength, power output, and intracellular hydration.",
+    "stock": 60,
+    "rating": 4.9,
+    "ratingCount": 22,
+    "variants": [
+      { "size": "250g (83 Servings)", "color": "Unflavored", "stock": 60 }
+    ],
+    "reviews": [
+      { "userName": "Vikram Malhotra", "rating": 5, "comment": "Noticed strength gains in bench press within 10 days of taking 3g daily." }
+    ],
+    "isActive": true
   }
 ]

@@ -25,6 +25,16 @@ const RATING_OPTIONS = [
   { label: "All Ratings", value: 0 },
 ];
 
+const SectionHeader = ({ title, isOpen, onToggle }) => (
+  <button
+    className="filter-section-header"
+    onClick={onToggle}
+  >
+    <span>{title}</span>
+    {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+  </button>
+);
+
 export default function FilterSidebar({
   isOpen,
   onClose,
@@ -59,16 +69,6 @@ export default function FilterSidebar({
     filters.minPrice > 0 || filters.maxPrice < 5000,
     filters.minRating > 0,
   ].filter(Boolean).length;
-
-  const SectionHeader = ({ title, section }) => (
-    <button
-      className="filter-section-header"
-      onClick={() => toggle(section)}
-    >
-      <span>{title}</span>
-      {openSections[section] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-    </button>
-  );
 
   return (
     <>
@@ -105,7 +105,7 @@ export default function FilterSidebar({
 
         {/* Sort By */}
         <div className="filter-section">
-          <SectionHeader title="Sort By" section="sort" />
+          <SectionHeader title="Sort By" isOpen={openSections.sort} onToggle={() => toggle("sort")} />
           {openSections.sort && (
             <div className="filter-options">
               {SORT_OPTIONS.map((opt) => (
@@ -126,7 +126,7 @@ export default function FilterSidebar({
 
         {/* Category */}
         <div className="filter-section">
-          <SectionHeader title="Category" section="category" />
+          <SectionHeader title="Category" isOpen={openSections.category} onToggle={() => toggle("category")} />
           {openSections.category && (
             <div className="filter-options">
               {CATEGORIES.map((cat) => (
@@ -147,7 +147,7 @@ export default function FilterSidebar({
 
         {/* Price Range */}
         <div className="filter-section">
-          <SectionHeader title="Price Range" section="price" />
+          <SectionHeader title="Price Range" isOpen={openSections.price} onToggle={() => toggle("price")} />
           {openSections.price && (
             <div className="filter-price-section">
               <div className="filter-price-inputs">
@@ -213,7 +213,7 @@ export default function FilterSidebar({
 
         {/* Rating */}
         <div className="filter-section">
-          <SectionHeader title="Customer Rating" section="rating" />
+          <SectionHeader title="Customer Rating" isOpen={openSections.rating} onToggle={() => toggle("rating")} />
           {openSections.rating && (
             <div className="filter-options">
               {RATING_OPTIONS.map((opt) => (

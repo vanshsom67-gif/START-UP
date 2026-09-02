@@ -116,7 +116,11 @@ app.listen(PORT, () => {
 
   // Connect MongoDB in background
   connectDB()
-    .then(() => ensureAdminUser())
+    .then((connected) => {
+      if (connected) {
+        ensureAdminUser();
+      }
+    })
     .catch((err) => {
       console.error("MongoDB background connect error:", err.message);
     });

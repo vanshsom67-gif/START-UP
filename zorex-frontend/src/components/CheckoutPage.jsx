@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ArrowLeft, CheckCircle, MapPin, CreditCard, ShoppingBag, ChevronRight, Tag } from "lucide-react";
-import { API_BASE } from "../config/api";
+import { API_BASE, getImageUrl } from "../config/api";
 
 const STEPS = ["Delivery Address", "Order Review", "Payment"];
 
@@ -34,13 +34,25 @@ export default function CheckoutPage({
   onOrderPlaced,
 }) {
   const [step, setStep] = useState(0);
+
+  const [savedAddresses] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`zorex_addresses_${user?.email || "guest"}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const defaultSaved = savedAddresses.find((a) => a.isDefault) || savedAddresses[0];
+
   const [address, setAddress] = useState({
-    name: user?.name || "",
-    phone: user?.phone || "",
-    addressLine: "",
-    city: "",
-    state: "",
-    pincode: "",
+    name: defaultSaved?.name || user?.name || "",
+    phone: defaultSaved?.phone || user?.phone || "",
+    addressLine: defaultSaved?.addressLine || "",
+    city: defaultSaved?.city || "",
+    state: defaultSaved?.state || "",
+    pincode: defaultSaved?.pincode || "",
   });
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -282,6 +294,48 @@ export default function CheckoutPage({
                 <h2>Delivery Address</h2>
               </div>
 
+              {savedAddresses.length > 0 && (
+                <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(255, 255, 255, 0.03)", borderRadius: "8px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                  <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "600", display: "block", marginBottom: "8px" }}>
+                    📍 Quick-Fill from Saved Addresses:
+                  </span>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {savedAddresses.map((sAddr) => {
+                      const isSelected = address.addressLine === sAddr.addressLine;
+                      return (
+                        <button
+                          key={sAddr.id}
+                          type="button"
+                          onClick={() => {
+                            setAddress({
+                              name: sAddr.name,
+                              phone: sAddr.phone,
+                              addressLine: sAddr.addressLine,
+                              city: sAddr.city,
+                              state: sAddr.state,
+                              pincode: sAddr.pincode,
+                            });
+                            setAddrErrors({});
+                          }}
+                          style={{
+                            padding: "6px 12px",
+                            borderRadius: "6px",
+                            background: isSelected ? "rgba(99, 102, 241, 0.2)" : "rgba(255, 255, 255, 0.05)",
+                            border: isSelected ? "1px solid #6366f1" : "1px solid rgba(255, 255, 255, 0.1)",
+                            color: isSelected ? "#818cf8" : "#cbd5e1",
+                            fontSize: "12px",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {sAddr.type}: {sAddr.city} ({sAddr.pincode})
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div className="checkout-form-grid">
                 <div className="checkout-field">
                   <label>Full Name *</label>
@@ -371,10 +425,17 @@ export default function CheckoutPage({
 
               <div className="checkout-items-list">
                 {cart.map((item) => {
-                  const img = item.image?.startsWith("http") ? item.image : `${API_BASE}${item.image}`;
+                  const img = getImageUrl(item.image, item.category);
                   return (
-                    <div key={item._id || item.id} className="checkout-item">
-                      <img src={img} alt={item.name} className="checkout-item-img" />
+                    <div key={item.cartItemId || item._id || item.id} className="checkout-item">
+                      <img
+                        src={img}
+                        alt={item.name}
+                        className="checkout-item-img"
+                        onError={(e) => {
+                          e.target.src = "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=200&q=80";
+                        }}
+                      />
                       <div className="checkout-item-info">
                         <p className="checkout-item-name">{item.name}</p>
                         {item.selectedSize && (

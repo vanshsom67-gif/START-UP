@@ -1,5 +1,16 @@
 [
   {
+    "_id": "admin_zorexa_001",
+    "id": "admin_zorexa_001",
+    "name": "Zorexa Admin",
+    "email": "admin@zorexa.com",
+    "phone": "8791910659",
+    "password": "admin123",
+    "role": "admin",
+    "isActive": true,
+    "createdAt": "2026-09-02T06:29:57.565Z"
+  },
+  {
     "email": "vansh@gmail.com",
     "phone": "765489373",
     "password": "Abhidjj"
@@ -18,5 +29,27 @@
     "email": "testuser@example.com",
     "phone": "9876543210",
     "password": "Password123!"
+  },
+  {
+    "_id": "user_1788330745574_gzlu8p",
+    "id": "user_1788330745574",
+    "name": "Test Shopper",
+    "email": "tester_1788330745444@example.com",
+    "phone": "9876543210",
+    "password": "$2b$10$GzH3od08gB91k4pzHHgE1ewCy0EAJ510T4mmlde3MsjWwT.QRd9Cm",
+    "role": "user",
+    "isActive": true,
+    "createdAt": "2026-09-02T06:32:25.574Z"
+  },
+  {
+    "_id": "user_1788340356530_mfc7gv",
+    "id": "user_1788340356530",
+    "name": "Test Shopper",
+    "email": "tester_1788340356440@example.com",
+    "phone": "9876543210",
+    "password": "$2b$10$.QZXdilgWdztP0rzmll5Qel6Yz257SuFofFcj/FhEJDlLja.Sxiwy",
+    "role": "user",
+    "isActive": true,
+    "createdAt": "2026-09-02T09:12:36.530Z"
   }
 ]

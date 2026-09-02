@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Package, RefreshCw, ChevronDown, ChevronUp, ShoppingCart } from "lucide-react";
-import { API_BASE, authFetch } from "../config/api";
+import { API_BASE, authFetch, getImageUrl } from "../config/api";
 
 const STATUS_STEPS = ["Placed", "Confirmed", "Shipped", "Delivered"];
 
@@ -227,11 +227,17 @@ function OrderCard({ order }) {
       {/* Preview items (always visible) */}
       <div className="order-items-preview">
         {order.items?.slice(0, expanded ? order.items.length : 2).map((item, i) => {
-          const img = item.image?.startsWith("http") ? item.image : `${API_BASE}${item.image}`;
+          const img = getImageUrl(item.image, item.category);
           return (
             <div key={i} className="order-item-row">
-              <img src={img} alt={item.name} className="order-item-img"
-                onError={(e) => { e.target.style.display = "none"; }} />
+              <img
+                src={img}
+                alt={item.name}
+                className="order-item-img"
+                onError={(e) => {
+                  e.target.src = "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=200&q=80";
+                }}
+              />
               <div className="order-item-info">
                 <p className="order-item-name">{item.name}</p>
                 <p className="order-item-meta">Qty: {item.quantity} × ₹{item.price?.toLocaleString()}</p>
