@@ -41,6 +41,7 @@ export default function ProductDetail({
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
   const [addedToCart, setAddedToCart] = useState(false);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
   // Gallery images list
   const productImages = localProduct.images && localProduct.images.length > 0
@@ -346,7 +347,13 @@ export default function ProductDetail({
             <div className="pd-size-section" style={{ marginBottom: "16px" }}>
               <div className="pd-size-header">
                 <span className="pd-section-label">Select Size</span>
-                <button className="pd-size-guide-btn">Size Guide →</button>
+                <button
+                  type="button"
+                  className="pd-size-guide-btn"
+                  onClick={() => setShowSizeGuide(true)}
+                >
+                  Size Guide →
+                </button>
               </div>
               <div className="pd-size-grid">
                 {uniqueSizes.map((size) => (
@@ -738,6 +745,81 @@ export default function ProductDetail({
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Size Guide Modal */}
+      {showSizeGuide && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowSizeGuide(false); }}
+        >
+          <div className="glass-modal-card" style={{ maxWidth: "560px" }}>
+            <button onClick={() => setShowSizeGuide(false)} className="modal-close-btn">&times;</button>
+            <h2 className="modal-title">📏 {localProduct.category?.includes("Women") ? "Women's" : "Men's"} Size Chart & Fit Guide</h2>
+            <p className="modal-description" style={{ marginBottom: "16px" }}>
+              All measurements are in inches (standard Indian brand sizing). If you prefer an oversized streetwear look, choose one size up.
+            </p>
+
+            <div style={{ overflowX: "auto", marginBottom: "16px" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "center" }}>
+                <thead>
+                  <tr style={{ background: "rgba(255,255,255,0.08)", color: "#818cf8", borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+                    <th style={{ padding: "10px" }}>Size</th>
+                    <th style={{ padding: "10px" }}>Chest (in)</th>
+                    <th style={{ padding: "10px" }}>Length (in)</th>
+                    <th style={{ padding: "10px" }}>Shoulder (in)</th>
+                    <th style={{ padding: "10px" }}>Waist (in)</th>
+                  </tr>
+                </thead>
+                <tbody style={{ color: "#cbd5e1" }}>
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <td style={{ padding: "8px", fontWeight: "700", color: "#f8fafc" }}>S (38)</td>
+                    <td style={{ padding: "8px" }}>38"</td>
+                    <td style={{ padding: "8px" }}>27"</td>
+                    <td style={{ padding: "8px" }}>17.5"</td>
+                    <td style={{ padding: "8px" }}>28-30"</td>
+                  </tr>
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(99,102,241,0.08)" }}>
+                    <td style={{ padding: "8px", fontWeight: "700", color: "#818cf8" }}>M (40)</td>
+                    <td style={{ padding: "8px" }}>40"</td>
+                    <td style={{ padding: "8px" }}>28"</td>
+                    <td style={{ padding: "8px" }}>18.5"</td>
+                    <td style={{ padding: "8px" }}>31-33"</td>
+                  </tr>
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <td style={{ padding: "8px", fontWeight: "700", color: "#f8fafc" }}>L (42)</td>
+                    <td style={{ padding: "8px" }}>42"</td>
+                    <td style={{ padding: "8px" }}>29"</td>
+                    <td style={{ padding: "8px" }}>19.5"</td>
+                    <td style={{ padding: "8px" }}>34-36"</td>
+                  </tr>
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <td style={{ padding: "8px", fontWeight: "700", color: "#f8fafc" }}>XL (44)</td>
+                    <td style={{ padding: "8px" }}>44"</td>
+                    <td style={{ padding: "8px" }}>30"</td>
+                    <td style={{ padding: "8px" }}>20.5"</td>
+                    <td style={{ padding: "8px" }}>37-39"</td>
+                  </tr>
+                  <tr>
+                    <td style={{ padding: "8px", fontWeight: "700", color: "#f8fafc" }}>XXL (46)</td>
+                    <td style={{ padding: "8px" }}>46"</td>
+                    <td style={{ padding: "8px" }}>31"</td>
+                    <td style={{ padding: "8px" }}>21.5"</td>
+                    <td style={{ padding: "8px" }}>40-42"</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ padding: "12px", background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "8px", fontSize: "12px", color: "#34d399", textAlign: "left", marginBottom: "16px" }}>
+              ✨ <strong>Model Fit Note:</strong> Model height is 5'11" (180 cm) wearing size <strong>L</strong> for a relaxed modern fit.
+            </div>
+
+            <button className="primary-modal-btn" onClick={() => setShowSizeGuide(false)}>
+              Got It
+            </button>
           </div>
         </div>
       )}

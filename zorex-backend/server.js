@@ -12,6 +12,8 @@ const orderRoutes = require("./routes/order.routes");
 const app = express();
 const PORT = process.env.PORT || 5000;
 const User = require("./models/User");
+const Product = require("./models/Product");
+const fs = require("fs");
 
 // ─── Auto-ensure Admin User on Startup ────────────────────────────────
 const ensureAdminUser = async () => {
@@ -29,6 +31,27 @@ const ensureAdminUser = async () => {
     }
   } catch (err) {
     console.error("Auto Admin check error:", err.message);
+  }
+};
+
+// ─── Auto-seed Products on Startup if Database is Empty ───────────────
+const seedProductsIfEmpty = async () => {
+  try {
+    const count = await Product.countDocuments();
+    if (count === 0) {
+      const productsFile = path.join(__dirname, "products.json");
+      if (fs.existsSync(productsFile)) {
+        const raw = fs.readFileSync(productsFile, "utf-8");
+        const list = JSON.parse(raw || "[]");
+        if (list.length > 0) {
+          const sanitizedList = list.map(({ _id, id, ...rest }) => rest);
+          await Product.insertMany(sanitizedList);
+          console.log(`✨ Successfully seeded ${list.length} initial products into MongoDB Atlas!`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Product seeding error:", err.message);
   }
 };
 
@@ -119,6 +142,7 @@ app.listen(PORT, () => {
     .then((connected) => {
       if (connected) {
         ensureAdminUser();
+        seedProductsIfEmpty();
       }
     })
     .catch((err) => {
